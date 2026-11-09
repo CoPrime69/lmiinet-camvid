@@ -1,0 +1,200 @@
+{
+  "device": "NVIDIA GeForce RTX 3060 Laptop GPU",
+  "rows": [
+    {
+      "model": "lmiinet",
+      "params": 727073,
+      "params_M": 0.727073,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 4.994721248,
+      "fps": 12.29065632357177,
+      "fps_fp16": 15.810211939416613,
+      "fps_graph": 76.16385801013887,
+      "fps_graph_fp16": 115.4113508710104,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "lmiinet",
+      "params": 727073,
+      "params_M": 0.727073,
+      "input": [
+        720,
+        960
+      ],
+      "gmacs": 19.978878848,
+      "fps": 17.426835392058212,
+      "fps_fp16": 14.488185435205953,
+      "fps_graph": 18.897402693464464,
+      "fps_graph_fp16": 30.936509713140442,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "unet",
+      "params": 1927339,
+      "params_M": 1.927339,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 24.3634176,
+      "fps": 109.4962243049167,
+      "fps_fp16": 153.54428578621383,
+      "fps_graph": 107.59588191244958,
+      "fps_graph_fp16": 170.68391165445053,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "unet",
+      "params": 1927339,
+      "params_M": 1.927339,
+      "input": [
+        720,
+        960
+      ],
+      "gmacs": 97.4536704,
+      "fps": 29.3294077293166,
+      "fps_fp16": 47.06476144257831,
+      "fps_graph": 29.48053064436705,
+      "fps_graph_fp16": 47.53553899474739,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "unet_pm",
+      "params": 753871,
+      "params_M": 0.753871,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 9.566208,
+      "fps": 154.84907557874428,
+      "fps_fp16": 146.97254198796034,
+      "fps_graph": 163.0866430628704,
+      "fps_graph_fp16": 255.53808525442713,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "unet_pm",
+      "params": 753871,
+      "params_M": 0.753871,
+      "input": [
+        720,
+        960
+      ],
+      "gmacs": 38.264832,
+      "fps": 41.093722576630654,
+      "fps_fp16": 64.1107382194368,
+      "fps_graph": 41.246682633221916,
+      "fps_graph_fp16": 65.146796253464,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "lmiinet_no_cc",
+      "params": 727048,
+      "params_M": 0.727048,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 4.994721248,
+      "fps": 15.72107937665111,
+      "fps_fp16": 12.915028476072376,
+      "fps_graph": 76.79895798609246,
+      "fps_graph_fp16": 115.72174844784901,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "lmiinet_fixed_cc",
+      "params": 727048,
+      "params_M": 0.727048,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 4.994721248,
+      "fps": 16.985699145430953,
+      "fps_fp16": 14.801075031720842,
+      "fps_graph": 73.78381401413611,
+      "fps_graph_fp16": 105.43297157442858,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "lmiinet_no_cru",
+      "params": 570273,
+      "params_M": 0.570273,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 4.032570848,
+      "fps": 23.23056664946151,
+      "fps_fp16": 19.166717745874955,
+      "fps_graph": 104.1151838681039,
+      "fps_graph_fp16": 148.2870326832821,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "lmiinet_no_tf",
+      "params": 517560,
+      "params_M": 0.51756,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 4.4103096,
+      "fps": 18.760569118316305,
+      "fps_fp16": 16.247468441174306,
+      "fps_graph": 84.40457509578744,
+      "fps_graph_fp16": 129.6287846433871,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "lmiinet_no_cab",
+      "params": 651000,
+      "params_M": 0.651,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 4.7956536,
+      "fps": 18.355914013913946,
+      "fps_fp16": 16.187532171689615,
+      "fps_graph": 77.26678931891107,
+      "fps_graph_fp16": 116.96125306344449,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "lmiinet_no_fe",
+      "params": 725431,
+      "params_M": 0.725431,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 4.970766848,
+      "fps": 18.667435914544033,
+      "fps_fp16": 16.47097636912092,
+      "fps_graph": 79.85826116856786,
+      "fps_graph_fp16": 119.31458543607648,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    },
+    {
+      "model": "lmiinet_no_aux",
+      "params": 725654,
+      "params_M": 0.725654,
+      "input": [
+        360,
+        480
+      ],
+      "gmacs": 4.994721248,
+      "fps": 17.713472362002197,
+      "fps_fp16": 15.882903863094322,
+      "fps_graph": 73.97164252653785,
+      "fps_graph_fp16": 115.13487013983335,
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    }
+  ]
+}

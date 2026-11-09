@@ -1,0 +1,19 @@
+check,status,detail,seconds
+linear_attention_equals_explicit_attention,pass,max abs error 2.9e-07,0.01
+focus_keeps_norm_and_sharpens,pass,"norm error 2.7e-06, peak ratio 1.95 -> 3.76",0.01
+focused_linear_attention_module_matches_reference,pass,max abs error 5.6e-16,0.03
+confusion_matrix_miou_equals_bruteforce,pass,mIoU 46.4194 == 46.4194,0.01
+mac_counter_matches_closed_form,pass,140440 == 140440,0.01
+poly_schedule_endpoints,pass,"1e-3 at start, 1e-3*0.5^0.9 halfway, 0 at the end",0.00
+channel_shuffle_is_the_expected_permutation,pass,"[0..5] -> [0,3,1,4,2,5]",0.00
+combination_coefficient_modes,pass,"learn: trainable 0.5, fixed: buffer 0.5, off: 0",0.04
+cru_and_lfib_preserve_shape_and_backprop,pass,"C in {32, 64, 128}, odd 11x13 maps",0.24
+downsampling_handles_odd_sizes,pass,"45x60 -> 23x30, 23x30 -> 12x15",0.01
+every_model_shapes_aux_and_gradients,pass,10 models; all parameters receive gradients; 90x117 input ok,5.67
+unet_parameter_count_matches_closed_form,pass,"unet 1,927,339, unet_pm 753,871",0.09
+lmiinet_parameter_budget,pass,"727,073 parameters (paper: 0.72M)",0.11
+fp16_forward_is_finite_and_close_to_fp32,pass,argmax agreement fp16 vs fp32 99.70%,6.47
+cuda_graph_training_step_matches_eager_step,pass,param diff graph 3.8e-03 vs eager-eager floor 4.1e-03; losses within 1.8e-03,9.76
+augmentations_keep_labels_valid,pass,"scale/crop/flip: sizes fixed, no new label values, flip aligned",0.20
+gpu_augmentation_identity_flip_and_labels,pass,"identity error 2.7e-06, flip exact, half-scale padded with void, labels valid",0.10
+camvid_split_sizes,pass,"367 / 101 / 233, labels in 0..11",0.19

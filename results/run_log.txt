@@ -1,0 +1,2232 @@
+[12:20:29] run.py phases=['tests', 'data', 'bench', 'main', 'ablation', 'scale', 'hires', 'assets', 'report'] epochs=80 seeds=[42] python=3.11.9
+[12:20:35] correctness checks
+[12:20:35]   [pass] linear_attention_equals_explicit_attention: max abs error 2.9e-07
+[12:20:35]   [pass] focus_keeps_norm_and_sharpens: norm error 3.0e-06, peak ratio 1.96 -> 3.78
+[12:20:35]   [pass] focused_linear_attention_module_matches_reference: max abs error 5.6e-16
+[12:20:35]   [pass] confusion_matrix_miou_equals_bruteforce: mIoU 46.4194 == 46.4194
+[12:20:35]   [pass] mac_counter_matches_closed_form: 140440 == 140440
+[12:20:35]   [pass] poly_schedule_endpoints: 1e-3 at start, 1e-3*0.5^0.9 halfway, 0 at the end
+[12:20:35]   [pass] channel_shuffle_is_the_expected_permutation: [0..5] -> [0,3,1,4,2,5]
+[12:20:35]   [pass] combination_coefficient_modes: learn: trainable 0.5, fixed: buffer 0.5, off: 0
+[12:20:35]   [pass] cru_and_lfib_preserve_shape_and_backprop: C in {32, 64, 128}, odd 11x13 maps
+[12:20:35]   [pass] downsampling_handles_odd_sizes: 45x60 -> 23x30, 23x30 -> 12x15
+[12:20:41]   [pass] every_model_shapes_aux_and_gradients: 10 models; all parameters receive gradients; 90x117 input ok
+[12:20:41]   [pass] unet_parameter_count_matches_closed_form: unet 1,927,339, unet_pm 753,871
+[12:20:41]   [pass] lmiinet_parameter_budget: 727,073 parameters (paper: 0.72M)
+[12:20:51]   [pass] fp16_forward_is_finite_and_close_to_fp32: argmax agreement fp16 vs fp32 99.70%
+[12:21:25]   [pass] cuda_graph_training_step_matches_eager_step: param diff graph 4.6e-03 vs eager-eager floor 4.1e-03; losses within 2.9e-03
+[12:21:25]   [pass] augmentations_keep_labels_valid: scale/crop/flip: sizes fixed, no new label values, flip aligned
+[12:21:25]   [pass] gpu_augmentation_identity_flip_and_labels: identity error 2.7e-06, flip exact, half-scale padded with void, labels valid
+[12:21:25]   [pass] camvid_split_sizes: 367 / 101 / 233, labels in 0..11
+[12:21:25] CamVid already present at data/CamVid
+[12:21:25]   train: 367 images (expected 367)
+[12:21:25]   val  : 101 images (expected 101)
+[12:21:25]   test : 233 images (expected 233)
+[12:21:25] benchmark on NVIDIA GeForce RTX 3060 Laptop GPU (100 timed passes after 20 warm-up)
+[12:23:12]   lmiinet           360x480   0.727M    4.99 GMACs | eager    4.7 (fp16   10.4) | CUDA graph    23.6 (fp16    36.3) FPS
+[12:26:00]   lmiinet           720x960   0.727M   19.98 GMACs | eager    5.1 (fp16    7.8) | CUDA graph    16.3 (fp16    26.9) FPS
+[12:26:37]   unet              360x480   1.927M   24.36 GMACs | eager   94.0 (fp16   99.0) | CUDA graph    96.6 (fp16   154.3) FPS
+[12:27:32]   unet              720x960   1.927M   97.45 GMACs | eager   22.7 (fp16   39.9) | CUDA graph    22.2 (fp16    39.8) FPS
+[12:28:08]   unet_pm           360x480   0.754M    9.57 GMACs | eager  119.1 (fp16   93.0) | CUDA graph   133.0 (fp16   214.5) FPS
+[12:28:52]   unet_pm           720x960   0.754M   38.26 GMACs | eager   36.1 (fp16   53.9) | CUDA graph    36.5 (fp16    55.3) FPS
+[12:29:21]   lmiinet_no_cc     360x480   0.727M    4.99 GMACs | eager   12.6 (fp16    7.9) | CUDA graph    64.8 (fp16   101.2) FPS
+[12:29:52]   lmiinet_fixed_cc  360x480   0.727M    4.99 GMACs | eager    9.6 (fp16    8.6) | CUDA graph    64.9 (fp16   100.2) FPS
+[12:30:15]   lmiinet_no_cru    360x480   0.570M    4.03 GMACs | eager   13.4 (fp16   11.8) | CUDA graph    98.7 (fp16   147.7) FPS
+[12:30:42]   lmiinet_no_tf     360x480   0.518M    4.41 GMACs | eager   11.3 (fp16   10.0) | CUDA graph    72.3 (fp16   110.1) FPS
+[12:31:08]   lmiinet_no_cab    360x480   0.651M    4.80 GMACs | eager   11.7 (fp16   10.3) | CUDA graph    67.2 (fp16   102.7) FPS
+[12:31:34]   lmiinet_no_fe     360x480   0.725M    4.97 GMACs | eager   12.2 (fp16   10.8) | CUDA graph    68.1 (fp16   105.1) FPS
+[12:32:00]   lmiinet_no_aux    360x480   0.726M    4.99 GMACs | eager   11.6 (fp16   10.3) | CUDA graph    65.7 (fp16   102.0) FPS
+[12:32:00] train lmiinet: train.py --model lmiinet --epochs 80 --seed 42 --workers 2 --train-fraction 1.0
+==> run 'lmiinet' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet
+    train 367 images (fraction 1.0), val 101, data on GPU
+    lmiinet: 727,073 params | precision bf16 | step mode eager
+[   1/80] loss 2.8243 lr 9.89e-04 | 152.9s
+[   2/80] loss 1.7406 lr 9.78e-04 | 22.7s
+[   3/80] loss 1.4809 lr 9.66e-04 | 22.6s
+[   4/80] loss 1.2936 lr 9.55e-04 | 22.8s
+[   5/80] loss 1.1889 lr 9.44e-04 | 23.2s | val mIoU 41.25 (best 41.25)
+[   6/80] loss 1.0840 lr 9.32e-04 | 28.7s
+[   7/80] loss 1.0702 lr 9.21e-04 | 19.7s
+[   8/80] loss 1.0004 lr 9.10e-04 | 18.1s
+[   9/80] loss 0.9680 lr 8.98e-04 | 16.4s
+[  10/80] loss 0.9533 lr 8.87e-04 | 16.0s | val mIoU 51.40 (best 51.40)
+[  11/80] loss 0.8906 lr 8.76e-04 | 16.3s
+[  12/80] loss 0.8479 lr 8.64e-04 | 16.3s
+[  13/80] loss 0.8236 lr 8.53e-04 | 18.2s
+[  14/80] loss 0.7840 lr 8.41e-04 | 18.9s
+[  15/80] loss 0.7646 lr 8.30e-04 | 17.4s | val mIoU 57.31 (best 57.31)
+[  16/80] loss 0.7617 lr 8.18e-04 | 15.9s
+[  17/80] loss 0.7414 lr 8.07e-04 | 15.8s
+[  18/80] loss 0.7159 lr 7.95e-04 | 15.5s
+[  19/80] loss 0.7002 lr 7.84e-04 | 16.1s
+[  20/80] loss 0.6823 lr 7.72e-04 | 15.6s | val mIoU 58.76 (best 58.76)
+[  21/80] loss 0.6693 lr 7.61e-04 | 15.3s
+[  22/80] loss 0.6496 lr 7.49e-04 | 15.3s
+[  23/80] loss 0.6201 lr 7.37e-04 | 15.3s
+[  24/80] loss 0.6198 lr 7.26e-04 | 15.2s
+[  25/80] loss 0.6116 lr 7.14e-04 | 15.2s | val mIoU 61.51 (best 61.51)
+[  26/80] loss 0.5838 lr 7.02e-04 | 15.5s
+[  27/80] loss 0.6054 lr 6.91e-04 | 15.6s
+[  28/80] loss 0.5872 lr 6.79e-04 | 15.7s
+[  29/80] loss 0.5579 lr 6.67e-04 | 15.6s
+[  30/80] loss 0.5529 lr 6.55e-04 | 15.8s | val mIoU 53.71 (best 61.51)
+[  31/80] loss 0.5693 lr 6.44e-04 | 16.4s
+[  32/80] loss 0.5513 lr 6.32e-04 | 19.3s
+[  33/80] loss 0.5263 lr 6.20e-04 | 19.9s
+[  34/80] loss 0.5312 lr 6.08e-04 | 18.1s
+[  35/80] loss 0.5563 lr 5.96e-04 | 17.4s | val mIoU 61.31 (best 61.51)
+[  36/80] loss 0.5352 lr 5.84e-04 | 15.5s
+[  37/80] loss 0.4993 lr 5.72e-04 | 15.9s
+[  38/80] loss 0.5025 lr 5.60e-04 | 15.8s
+[  39/80] loss 0.4879 lr 5.48e-04 | 15.7s
+[  40/80] loss 0.4727 lr 5.36e-04 | 15.7s | val mIoU 64.62 (best 64.62)
+[  41/80] loss 0.4766 lr 5.24e-04 | 15.8s
+[  42/80] loss 0.4687 lr 5.12e-04 | 17.8s
+[  43/80] loss 0.4593 lr 5.00e-04 | 20.4s
+[  44/80] loss 0.4696 lr 4.88e-04 | 22.8s
+[  45/80] loss 0.4584 lr 4.75e-04 | 24.9s | val mIoU 66.17 (best 66.17)
+[12:50:16] run.py phases=['tests', 'data', 'bench', 'main', 'ablation', 'scale', 'hires', 'assets', 'report'] epochs=80 seeds=[42] python=3.11.9
+[12:50:22] correctness checks
+[12:50:22]   [pass] linear_attention_equals_explicit_attention: max abs error 2.9e-07
+[12:50:22]   [pass] focus_keeps_norm_and_sharpens: norm error 2.3e-06, peak ratio 1.97 -> 3.83
+[12:50:22]   [pass] focused_linear_attention_module_matches_reference: max abs error 5.6e-16
+[12:50:22]   [pass] confusion_matrix_miou_equals_bruteforce: mIoU 46.4194 == 46.4194
+[12:50:22]   [pass] mac_counter_matches_closed_form: 140440 == 140440
+[12:50:22]   [pass] poly_schedule_endpoints: 1e-3 at start, 1e-3*0.5^0.9 halfway, 0 at the end
+[12:50:22]   [pass] channel_shuffle_is_the_expected_permutation: [0..5] -> [0,3,1,4,2,5]
+[12:50:22]   [pass] combination_coefficient_modes: learn: trainable 0.5, fixed: buffer 0.5, off: 0
+[12:50:23]   [pass] cru_and_lfib_preserve_shape_and_backprop: C in {32, 64, 128}, odd 11x13 maps
+[12:50:23]   [pass] downsampling_handles_odd_sizes: 45x60 -> 23x30, 23x30 -> 12x15
+[12:50:28]   [pass] every_model_shapes_aux_and_gradients: 10 models; all parameters receive gradients; 90x117 input ok
+[12:50:28]   [pass] unet_parameter_count_matches_closed_form: unet 1,927,339, unet_pm 753,871
+[12:50:28]   [pass] lmiinet_parameter_budget: 727,073 parameters (paper: 0.72M)
+[  46/80] loss 0.4523 lr 4.63e-04 | 191.2s
+[  47/80] loss 0.4386 lr 4.51e-04 | 65.6s
+[  48/80] loss 0.4382 lr 4.39e-04 | 67.3s
+[  49/80] loss 0.4344 lr 4.26e-04 | 100.8s
+[  50/80] loss 0.4293 lr 4.14e-04 | 19.7s | val mIoU 63.64 (best 66.17)
+[  51/80] loss 0.4316 lr 4.01e-04 | 19.7s
+[  52/80] loss 0.4364 lr 3.89e-04 | 19.6s
+[  53/80] loss 0.4426 lr 3.77e-04 | 19.3s
+[  54/80] loss 0.4238 lr 3.64e-04 | 19.4s
+[  55/80] loss 0.4140 lr 3.51e-04 | 19.5s | val mIoU 65.78 (best 66.17)
+[  56/80] loss 0.4118 lr 3.39e-04 | 19.3s
+[  57/80] loss 0.4076 lr 3.26e-04 | 19.4s
+[  58/80] loss 0.4031 lr 3.13e-04 | 19.8s
+[  59/80] loss 0.3937 lr 3.00e-04 | 19.4s
+[  60/80] loss 0.3964 lr 2.87e-04 | 20.3s | val mIoU 66.03 (best 66.17)
+[  61/80] loss 0.3911 lr 2.75e-04 | 24.0s
+[  62/80] loss 0.3939 lr 2.61e-04 | 24.7s
+[13:03:40] run.py phases=['tests', 'data', 'bench', 'main', 'ablation', 'scale', 'hires', 'assets', 'report'] epochs=80 seeds=[42] python=3.11.9
+[13:03:46] correctness checks
+[13:03:46]   [pass] linear_attention_equals_explicit_attention: max abs error 2.9e-07
+[13:03:46]   [pass] focus_keeps_norm_and_sharpens: norm error 2.7e-06, peak ratio 1.95 -> 3.76
+[13:03:46]   [pass] focused_linear_attention_module_matches_reference: max abs error 5.6e-16
+[13:03:46]   [pass] confusion_matrix_miou_equals_bruteforce: mIoU 46.4194 == 46.4194
+[13:03:46]   [pass] mac_counter_matches_closed_form: 140440 == 140440
+[13:03:46]   [pass] poly_schedule_endpoints: 1e-3 at start, 1e-3*0.5^0.9 halfway, 0 at the end
+[13:03:46]   [pass] channel_shuffle_is_the_expected_permutation: [0..5] -> [0,3,1,4,2,5]
+[13:03:46]   [pass] combination_coefficient_modes: learn: trainable 0.5, fixed: buffer 0.5, off: 0
+[13:03:46]   [pass] cru_and_lfib_preserve_shape_and_backprop: C in {32, 64, 128}, odd 11x13 maps
+[13:03:46]   [pass] downsampling_handles_odd_sizes: 45x60 -> 23x30, 23x30 -> 12x15
+[13:03:52]   [pass] every_model_shapes_aux_and_gradients: 10 models; all parameters receive gradients; 90x117 input ok
+[13:03:52]   [pass] unet_parameter_count_matches_closed_form: unet 1,927,339, unet_pm 753,871
+[13:03:52]   [pass] lmiinet_parameter_budget: 727,073 parameters (paper: 0.72M)
+[13:03:59]   [pass] fp16_forward_is_finite_and_close_to_fp32: argmax agreement fp16 vs fp32 99.70%
+[13:04:09]   [pass] cuda_graph_training_step_matches_eager_step: param diff graph 3.8e-03 vs eager-eager floor 4.1e-03; losses within 1.8e-03
+[13:04:09]   [pass] augmentations_keep_labels_valid: scale/crop/flip: sizes fixed, no new label values, flip aligned
+[13:04:09]   [pass] gpu_augmentation_identity_flip_and_labels: identity error 2.7e-06, flip exact, half-scale padded with void, labels valid
+[13:04:09]   [pass] camvid_split_sizes: 367 / 101 / 233, labels in 0..11
+[13:04:09] CamVid already present at data/CamVid
+[13:04:09]   train: 367 images (expected 367)
+[13:04:09]   val  : 101 images (expected 101)
+[13:04:09]   test : 233 images (expected 233)
+[13:04:09] benchmark on NVIDIA GeForce RTX 3060 Laptop GPU (100 timed passes after 20 warm-up)
+[13:05:10]   lmiinet           360x480   0.727M    4.99 GMACs | eager   12.3 (fp16   15.8) | CUDA graph    76.2 (fp16   115.4) FPS
+[13:06:45]   lmiinet           720x960   0.727M   19.98 GMACs | eager   17.4 (fp16   14.5) | CUDA graph    18.9 (fp16    30.9) FPS
+[13:07:12]   unet              360x480   1.927M   24.36 GMACs | eager  109.5 (fp16  153.5) | CUDA graph   107.6 (fp16   170.7) FPS
+[13:07:51]   unet              720x960   1.927M   97.45 GMACs | eager   29.3 (fp16   47.1) | CUDA graph    29.5 (fp16    47.5) FPS
+[13:08:18]   unet_pm           360x480   0.754M    9.57 GMACs | eager  154.8 (fp16  147.0) | CUDA graph   163.1 (fp16   255.5) FPS
+[13:08:54]   unet_pm           720x960   0.754M   38.26 GMACs | eager   41.1 (fp16   64.1) | CUDA graph    41.2 (fp16    65.1) FPS
+[13:09:14]   lmiinet_no_cc     360x480   0.727M    4.99 GMACs | eager   15.7 (fp16   12.9) | CUDA graph    76.8 (fp16   115.7) FPS
+[13:09:33]   lmiinet_fixed_cc  360x480   0.727M    4.99 GMACs | eager   17.0 (fp16   14.8) | CUDA graph    73.8 (fp16   105.4) FPS
+[13:09:47]   lmiinet_no_cru    360x480   0.570M    4.03 GMACs | eager   23.2 (fp16   19.2) | CUDA graph   104.1 (fp16   148.3) FPS
+[13:10:05]   lmiinet_no_tf     360x480   0.518M    4.41 GMACs | eager   18.8 (fp16   16.2) | CUDA graph    84.4 (fp16   129.6) FPS
+[13:10:22]   lmiinet_no_cab    360x480   0.651M    4.80 GMACs | eager   18.4 (fp16   16.2) | CUDA graph    77.3 (fp16   117.0) FPS
+[13:10:40]   lmiinet_no_fe     360x480   0.725M    4.97 GMACs | eager   18.7 (fp16   16.5) | CUDA graph    79.9 (fp16   119.3) FPS
+[13:10:58]   lmiinet_no_aux    360x480   0.726M    4.99 GMACs | eager   17.7 (fp16   15.9) | CUDA graph    74.0 (fp16   115.1) FPS
+[13:10:58] train lmiinet: train.py --model lmiinet --epochs 80 --seed 42 --workers 2 --train-fraction 1.0 --resume
+==> run 'lmiinet' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet
+    train 367 images (fraction 1.0), val 101, data on GPU
+    lmiinet: 727,073 params | precision bf16 | step mode eager
+    resumed at epoch 61, best val mIoU 66.17
+[  61/80] loss 0.3857 lr 2.75e-04 | 171.1s
+[  62/80] loss 0.3832 lr 2.61e-04 | 24.0s
+[  63/80] loss 0.3883 lr 2.48e-04 | 23.8s
+[  64/80] loss 0.3782 lr 2.35e-04 | 23.8s
+[  65/80] loss 0.3757 lr 2.22e-04 | 23.8s | val mIoU 66.85 (best 66.85)
+[  66/80] loss 0.3700 lr 2.09e-04 | 16.0s
+[  67/80] loss 0.3711 lr 1.95e-04 | 15.7s
+[  68/80] loss 0.3683 lr 1.82e-04 | 15.6s
+[  69/80] loss 0.3615 lr 1.68e-04 | 15.7s
+[  70/80] loss 0.3640 lr 1.54e-04 | 15.7s | val mIoU 67.20 (best 67.20)
+[  71/80] loss 0.3604 lr 1.40e-04 | 15.9s
+[  72/80] loss 0.3604 lr 1.26e-04 | 15.8s
+[  73/80] loss 0.3568 lr 1.12e-04 | 15.6s
+[  74/80] loss 0.3474 lr 9.75e-05 | 15.8s
+[  75/80] loss 0.3443 lr 8.28e-05 | 15.7s | val mIoU 67.17 (best 67.20)
+[  76/80] loss 0.3571 lr 6.78e-05 | 15.6s
+[  77/80] loss 0.3501 lr 5.24e-05 | 15.7s
+[  78/80] loss 0.3460 lr 3.65e-05 | 15.9s
+[  79/80] loss 0.3471 lr 1.98e-05 | 15.6s
+[  80/80] loss 0.3479 lr 6.30e-07 | 15.8s | val mIoU 67.15 (best 67.20)
+==> TEST (best val checkpoint, epoch 70): mIoU 55.60 | pixel acc 85.93
+    0.727M params | 4.99 GMACs | FPS eager 16.8, CUDA graph 75.5 | trained in 10.4 min | peak 4.25 GB
+[13:23:30] done lmiinet in 12.5 min
+[13:23:30] train unet: train.py --model unet --epochs 80 --seed 42 --workers 2 --train-fraction 1.0
+==> run 'unet' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\unet
+    train 367 images (fraction 1.0), val 101, data on GPU
+    unet: 1,927,339 params | precision bf16 | step mode eager
+[   1/80] loss 2.0151 lr 9.89e-04 | 49.0s
+[   2/80] loss 1.5577 lr 9.78e-04 | 6.7s
+[   3/80] loss 1.4222 lr 9.66e-04 | 6.7s
+[   4/80] loss 1.2954 lr 9.55e-04 | 6.7s
+[   5/80] loss 1.2209 lr 9.44e-04 | 6.7s | val mIoU 28.40 (best 28.40)
+[   6/80] loss 1.1593 lr 9.32e-04 | 6.7s
+[   7/80] loss 1.0952 lr 9.21e-04 | 6.7s
+[   8/80] loss 1.0328 lr 9.10e-04 | 6.7s
+[   9/80] loss 0.9986 lr 8.98e-04 | 6.7s
+[  10/80] loss 0.9769 lr 8.87e-04 | 6.7s | val mIoU 41.73 (best 41.73)
+[  11/80] loss 0.9569 lr 8.76e-04 | 6.7s
+[  12/80] loss 0.9078 lr 8.64e-04 | 6.7s
+[  13/80] loss 0.8652 lr 8.53e-04 | 6.7s
+[  14/80] loss 0.8206 lr 8.41e-04 | 6.7s
+[  15/80] loss 0.8094 lr 8.30e-04 | 6.7s | val mIoU 42.46 (best 42.46)
+[  16/80] loss 0.7756 lr 8.18e-04 | 6.7s
+[  17/80] loss 0.7575 lr 8.07e-04 | 6.7s
+[  18/80] loss 0.7716 lr 7.95e-04 | 6.7s
+[  19/80] loss 0.7500 lr 7.84e-04 | 6.7s
+[  20/80] loss 0.7252 lr 7.72e-04 | 6.7s | val mIoU 46.43 (best 46.43)
+[  21/80] loss 0.7009 lr 7.61e-04 | 6.7s
+[  22/80] loss 0.6878 lr 7.49e-04 | 6.7s
+[  23/80] loss 0.6791 lr 7.37e-04 | 6.7s
+[  24/80] loss 0.6797 lr 7.26e-04 | 6.7s
+[  25/80] loss 0.6335 lr 7.14e-04 | 6.7s | val mIoU 49.95 (best 49.95)
+[  26/80] loss 0.6347 lr 7.02e-04 | 6.7s
+[  27/80] loss 0.6582 lr 6.91e-04 | 6.7s
+[  28/80] loss 0.6144 lr 6.79e-04 | 6.7s
+[  29/80] loss 0.6109 lr 6.67e-04 | 6.7s
+[  30/80] loss 0.6200 lr 6.55e-04 | 6.7s | val mIoU 46.55 (best 49.95)
+[  31/80] loss 0.5860 lr 6.44e-04 | 6.7s
+[  32/80] loss 0.5773 lr 6.32e-04 | 6.7s
+[  33/80] loss 0.5523 lr 6.20e-04 | 6.7s
+[  34/80] loss 0.5580 lr 6.08e-04 | 6.7s
+[  35/80] loss 0.5456 lr 5.96e-04 | 6.7s | val mIoU 52.27 (best 52.27)
+[  36/80] loss 0.5321 lr 5.84e-04 | 6.7s
+[  37/80] loss 0.5304 lr 5.72e-04 | 6.7s
+[  38/80] loss 0.5154 lr 5.60e-04 | 6.7s
+[  39/80] loss 0.5109 lr 5.48e-04 | 6.7s
+[  40/80] loss 0.5087 lr 5.36e-04 | 6.7s | val mIoU 52.35 (best 52.35)
+[  41/80] loss 0.4856 lr 5.24e-04 | 6.7s
+[  42/80] loss 0.4609 lr 5.12e-04 | 7.4s
+[  43/80] loss 0.4562 lr 5.00e-04 | 7.5s
+[  44/80] loss 0.4772 lr 4.88e-04 | 7.6s
+[  45/80] loss 0.4779 lr 4.75e-04 | 7.6s | val mIoU 56.23 (best 56.23)
+[  46/80] loss 0.4572 lr 4.63e-04 | 6.8s
+[  47/80] loss 0.4329 lr 4.51e-04 | 6.9s
+[  48/80] loss 0.4524 lr 4.39e-04 | 6.8s
+[  49/80] loss 0.4071 lr 4.26e-04 | 6.7s
+[  50/80] loss 0.4208 lr 4.14e-04 | 6.7s | val mIoU 60.63 (best 60.63)
+[  51/80] loss 0.4135 lr 4.01e-04 | 6.7s
+[  52/80] loss 0.4129 lr 3.89e-04 | 6.7s
+[  53/80] loss 0.4225 lr 3.77e-04 | 6.7s
+[  54/80] loss 0.4051 lr 3.64e-04 | 6.7s
+[  55/80] loss 0.3946 lr 3.51e-04 | 6.7s | val mIoU 60.44 (best 60.63)
+[  56/80] loss 0.3846 lr 3.39e-04 | 6.7s
+[  57/80] loss 0.3928 lr 3.26e-04 | 6.7s
+[  58/80] loss 0.3725 lr 3.13e-04 | 6.7s
+[  59/80] loss 0.3751 lr 3.00e-04 | 6.7s
+[  60/80] loss 0.3756 lr 2.87e-04 | 6.7s | val mIoU 60.14 (best 60.63)
+[  61/80] loss 0.3539 lr 2.75e-04 | 6.7s
+[  62/80] loss 0.3494 lr 2.61e-04 | 6.7s
+[  63/80] loss 0.3423 lr 2.48e-04 | 6.7s
+[  64/80] loss 0.3398 lr 2.35e-04 | 6.7s
+[  65/80] loss 0.3426 lr 2.22e-04 | 6.7s | val mIoU 61.92 (best 61.92)
+[  66/80] loss 0.3340 lr 2.09e-04 | 6.7s
+[  67/80] loss 0.3265 lr 1.95e-04 | 6.7s
+[  68/80] loss 0.3309 lr 1.82e-04 | 6.7s
+[  69/80] loss 0.3038 lr 1.68e-04 | 6.7s
+[  70/80] loss 0.3293 lr 1.54e-04 | 6.7s | val mIoU 61.63 (best 61.92)
+[  71/80] loss 0.3125 lr 1.40e-04 | 6.7s
+[  72/80] loss 0.3088 lr 1.26e-04 | 6.7s
+[  73/80] loss 0.3084 lr 1.12e-04 | 6.7s
+[  74/80] loss 0.2960 lr 9.75e-05 | 6.7s
+[  75/80] loss 0.2904 lr 8.28e-05 | 6.7s | val mIoU 64.79 (best 64.79)
+[  76/80] loss 0.2898 lr 6.78e-05 | 6.7s
+[  77/80] loss 0.2753 lr 5.24e-05 | 6.7s
+[  78/80] loss 0.2718 lr 3.65e-05 | 6.7s
+[  79/80] loss 0.2728 lr 1.98e-05 | 6.7s
+[  80/80] loss 0.2758 lr 6.30e-07 | 6.7s | val mIoU 66.20 (best 66.20)
+==> TEST (best val checkpoint, epoch 80): mIoU 57.50 | pixel acc 86.45
+    1.927M params | 24.36 GMACs | FPS eager 111.8, CUDA graph 115.1 | trained in 10.3 min | peak 3.07 GB
+[13:34:35] done unet in 11.1 min
+[13:34:35] train unet_pm: train.py --model unet_pm --epochs 80 --seed 42 --workers 2 --train-fraction 1.0
+==> run 'unet_pm' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\unet_pm
+    train 367 images (fraction 1.0), val 101, data on GPU
+    unet_pm: 753,871 params | precision bf16 | step mode eager
+[   1/80] loss 2.2772 lr 9.89e-04 | 62.8s
+[   2/80] loss 1.7824 lr 9.78e-04 | 5.5s
+[   3/80] loss 1.5433 lr 9.66e-04 | 5.5s
+[   4/80] loss 1.3992 lr 9.55e-04 | 5.4s
+[   5/80] loss 1.3055 lr 9.44e-04 | 5.4s | val mIoU 28.50 (best 28.50)
+[   6/80] loss 1.2302 lr 9.32e-04 | 5.4s
+[   7/80] loss 1.1608 lr 9.21e-04 | 5.4s
+[   8/80] loss 1.1270 lr 9.10e-04 | 5.4s
+[   9/80] loss 1.0687 lr 8.98e-04 | 5.5s
+[  10/80] loss 1.0290 lr 8.87e-04 | 5.5s | val mIoU 32.96 (best 32.96)
+[  11/80] loss 1.0433 lr 8.76e-04 | 5.5s
+[  12/80] loss 0.9860 lr 8.64e-04 | 5.8s
+[  13/80] loss 0.9421 lr 8.53e-04 | 5.8s
+[  14/80] loss 0.8862 lr 8.41e-04 | 5.7s
+[  15/80] loss 0.9029 lr 8.30e-04 | 5.6s | val mIoU 38.64 (best 38.64)
+[  16/80] loss 0.8544 lr 8.18e-04 | 5.7s
+[  17/80] loss 0.8446 lr 8.07e-04 | 5.5s
+[  18/80] loss 0.8185 lr 7.95e-04 | 5.6s
+[  19/80] loss 0.8172 lr 7.84e-04 | 5.6s
+[  20/80] loss 0.7961 lr 7.72e-04 | 5.6s | val mIoU 40.15 (best 40.15)
+[  21/80] loss 0.7622 lr 7.61e-04 | 5.7s
+[  22/80] loss 0.7408 lr 7.49e-04 | 6.0s
+[  23/80] loss 0.7363 lr 7.37e-04 | 5.8s
+[  24/80] loss 0.7087 lr 7.26e-04 | 5.8s
+[  25/80] loss 0.7019 lr 7.14e-04 | 5.7s | val mIoU 45.57 (best 45.57)
+[  26/80] loss 0.7049 lr 7.02e-04 | 5.6s
+[  27/80] loss 0.7105 lr 6.91e-04 | 5.7s
+[  28/80] loss 0.6749 lr 6.79e-04 | 5.8s
+[  29/80] loss 0.6601 lr 6.67e-04 | 5.7s
+[  30/80] loss 0.6668 lr 6.55e-04 | 5.8s | val mIoU 47.85 (best 47.85)
+[  31/80] loss 0.6366 lr 6.44e-04 | 5.9s
+[  32/80] loss 0.6365 lr 6.32e-04 | 5.8s
+[  33/80] loss 0.6130 lr 6.20e-04 | 5.9s
+[  34/80] loss 0.6076 lr 6.08e-04 | 5.7s
+[  35/80] loss 0.6081 lr 5.96e-04 | 5.8s | val mIoU 55.08 (best 55.08)
+[  36/80] loss 0.5790 lr 5.84e-04 | 5.6s
+[  37/80] loss 0.5744 lr 5.72e-04 | 5.6s
+[  38/80] loss 0.5726 lr 5.60e-04 | 5.6s
+[  39/80] loss 0.5663 lr 5.48e-04 | 5.6s
+[  40/80] loss 0.5581 lr 5.36e-04 | 5.6s | val mIoU 53.58 (best 55.08)
+[  41/80] loss 0.5486 lr 5.24e-04 | 5.6s
+[  42/80] loss 0.5309 lr 5.12e-04 | 5.6s
+[  43/80] loss 0.5126 lr 5.00e-04 | 5.6s
+[  44/80] loss 0.5401 lr 4.88e-04 | 5.6s
+[  45/80] loss 0.5389 lr 4.75e-04 | 5.6s | val mIoU 53.60 (best 55.08)
+[  46/80] loss 0.5200 lr 4.63e-04 | 5.6s
+[  47/80] loss 0.4952 lr 4.51e-04 | 5.6s
+[  48/80] loss 0.5144 lr 4.39e-04 | 5.8s
+[  49/80] loss 0.4837 lr 4.26e-04 | 5.6s
+[  50/80] loss 0.4777 lr 4.14e-04 | 5.6s | val mIoU 56.24 (best 56.24)
+[  51/80] loss 0.4838 lr 4.01e-04 | 6.0s
+[  52/80] loss 0.4879 lr 3.89e-04 | 5.9s
+[  53/80] loss 0.4866 lr 3.77e-04 | 5.8s
+[  54/80] loss 0.4558 lr 3.64e-04 | 5.7s
+[  55/80] loss 0.4525 lr 3.51e-04 | 5.7s | val mIoU 57.59 (best 57.59)
+[  56/80] loss 0.4507 lr 3.39e-04 | 5.6s
+[  57/80] loss 0.4622 lr 3.26e-04 | 5.6s
+[  58/80] loss 0.4397 lr 3.13e-04 | 5.6s
+[  59/80] loss 0.4339 lr 3.00e-04 | 5.6s
+[  60/80] loss 0.4363 lr 2.87e-04 | 5.6s | val mIoU 59.71 (best 59.71)
+[  61/80] loss 0.4293 lr 2.75e-04 | 5.6s
+[  62/80] loss 0.4094 lr 2.61e-04 | 5.6s
+[  63/80] loss 0.4175 lr 2.48e-04 | 5.6s
+[  64/80] loss 0.4051 lr 2.35e-04 | 5.7s
+[  65/80] loss 0.4081 lr 2.22e-04 | 5.9s | val mIoU 58.26 (best 59.71)
+[  66/80] loss 0.4016 lr 2.09e-04 | 6.0s
+[  67/80] loss 0.3966 lr 1.95e-04 | 5.9s
+[  68/80] loss 0.3985 lr 1.82e-04 | 5.7s
+[  69/80] loss 0.3718 lr 1.68e-04 | 5.7s
+[  70/80] loss 0.4001 lr 1.54e-04 | 5.7s | val mIoU 57.81 (best 59.71)
+[  71/80] loss 0.3883 lr 1.40e-04 | 5.7s
+[  72/80] loss 0.3742 lr 1.26e-04 | 5.7s
+[  73/80] loss 0.3847 lr 1.12e-04 | 5.7s
+[  74/80] loss 0.3729 lr 9.75e-05 | 5.7s
+[  75/80] loss 0.3662 lr 8.28e-05 | 5.7s | val mIoU 60.12 (best 60.12)
+[  76/80] loss 0.3630 lr 6.78e-05 | 5.7s
+[  77/80] loss 0.3501 lr 5.24e-05 | 5.7s
+[  78/80] loss 0.3461 lr 3.65e-05 | 5.7s
+[  79/80] loss 0.3471 lr 1.98e-05 | 5.7s
+[  80/80] loss 0.3540 lr 6.30e-07 | 5.7s | val mIoU 61.49 (best 61.49)
+==> TEST (best val checkpoint, epoch 80): mIoU 54.33 | pixel acc 84.61
+    0.754M params | 9.57 GMACs | FPS eager 145.6, CUDA graph 151.4 | trained in 9.0 min | peak 2.69 GB
+[13:44:26] done unet_pm in 9.8 min
+[13:44:26] train lmiinet_no_cc: train.py --model lmiinet_no_cc --epochs 80 --seed 42 --workers 2 --train-fraction 1.0
+==> run 'lmiinet_no_cc' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet_no_cc
+    train 367 images (fraction 1.0), val 101, data on GPU
+    lmiinet_no_cc: 727,048 params | precision bf16 | step mode eager
+[   1/80] loss 2.7565 lr 9.89e-04 | 135.2s
+[   2/80] loss 1.7032 lr 9.78e-04 | 24.2s
+[   3/80] loss 1.4552 lr 9.66e-04 | 23.5s
+[   4/80] loss 1.2823 lr 9.55e-04 | 23.5s
+[   5/80] loss 1.1685 lr 9.44e-04 | 40.2s | val mIoU 49.14 (best 49.14)
+[   6/80] loss 1.0659 lr 9.32e-04 | 17.1s
+[   7/80] loss 1.0603 lr 9.21e-04 | 16.5s
+[   8/80] loss 0.9720 lr 9.10e-04 | 16.4s
+[   9/80] loss 0.9156 lr 8.98e-04 | 18.0s
+[  10/80] loss 0.9281 lr 8.87e-04 | 17.0s | val mIoU 46.01 (best 49.14)
+[  11/80] loss 0.8680 lr 8.76e-04 | 20.7s
+[  12/80] loss 0.8338 lr 8.64e-04 | 19.7s
+[  13/80] loss 0.7969 lr 8.53e-04 | 16.9s
+[  14/80] loss 0.7494 lr 8.41e-04 | 20.2s
+[  15/80] loss 0.7340 lr 8.30e-04 | 17.2s | val mIoU 53.41 (best 53.41)
+[  16/80] loss 0.7220 lr 8.18e-04 | 17.3s
+[  17/80] loss 0.7100 lr 8.07e-04 | 16.2s
+[  18/80] loss 0.7054 lr 7.95e-04 | 17.2s
+[  19/80] loss 0.6907 lr 7.84e-04 | 15.4s
+[  20/80] loss 0.6802 lr 7.72e-04 | 15.6s | val mIoU 57.20 (best 57.20)
+[  21/80] loss 0.6559 lr 7.61e-04 | 15.3s
+[  22/80] loss 0.6510 lr 7.49e-04 | 20.5s
+[  23/80] loss 0.6287 lr 7.37e-04 | 21.9s
+[  24/80] loss 0.6136 lr 7.26e-04 | 15.6s
+[  25/80] loss 0.5816 lr 7.14e-04 | 15.8s | val mIoU 61.53 (best 61.53)
+[  26/80] loss 0.5777 lr 7.02e-04 | 17.8s
+[  27/80] loss 0.5941 lr 6.91e-04 | 17.4s
+[  28/80] loss 0.5734 lr 6.79e-04 | 17.0s
+[  29/80] loss 0.5594 lr 6.67e-04 | 18.3s
+[  30/80] loss 0.5456 lr 6.55e-04 | 20.2s | val mIoU 52.11 (best 61.53)
+[  31/80] loss 0.5571 lr 6.44e-04 | 17.3s
+[  32/80] loss 0.5445 lr 6.32e-04 | 18.0s
+[  33/80] loss 0.5165 lr 6.20e-04 | 16.4s
+[  34/80] loss 0.5237 lr 6.08e-04 | 17.6s
+[  35/80] loss 0.5310 lr 5.96e-04 | 17.0s | val mIoU 62.17 (best 62.17)
+[  36/80] loss 0.5033 lr 5.84e-04 | 17.3s
+[  37/80] loss 0.4808 lr 5.72e-04 | 17.0s
+[  38/80] loss 0.4745 lr 5.60e-04 | 17.9s
+[  39/80] loss 0.4896 lr 5.48e-04 | 17.3s
+[  40/80] loss 0.4725 lr 5.36e-04 | 17.0s | val mIoU 63.92 (best 63.92)
+[  41/80] loss 0.4714 lr 5.24e-04 | 16.9s
+[  42/80] loss 0.4670 lr 5.12e-04 | 16.7s
+[  43/80] loss 0.4592 lr 5.00e-04 | 18.3s
+[  44/80] loss 0.4724 lr 4.88e-04 | 17.2s
+[  45/80] loss 0.4524 lr 4.75e-04 | 16.3s | val mIoU 65.98 (best 65.98)
+[  46/80] loss 0.4441 lr 4.63e-04 | 16.2s
+[  47/80] loss 0.4299 lr 4.51e-04 | 17.1s
+[  48/80] loss 0.4383 lr 4.39e-04 | 17.6s
+[  49/80] loss 0.4283 lr 4.26e-04 | 22.1s
+[  50/80] loss 0.4215 lr 4.14e-04 | 17.7s | val mIoU 64.99 (best 65.98)
+[  51/80] loss 0.4281 lr 4.01e-04 | 21.6s
+[  52/80] loss 0.4250 lr 3.89e-04 | 19.0s
+[  53/80] loss 0.4380 lr 3.77e-04 | 18.4s
+[  54/80] loss 0.4193 lr 3.64e-04 | 20.5s
+[  55/80] loss 0.4061 lr 3.51e-04 | 21.9s | val mIoU 67.08 (best 67.08)
+[  56/80] loss 0.4015 lr 3.39e-04 | 16.8s
+[  57/80] loss 0.4104 lr 3.26e-04 | 18.3s
+[  58/80] loss 0.3953 lr 3.13e-04 | 22.4s
+[  59/80] loss 0.3876 lr 3.00e-04 | 25.2s
+[  60/80] loss 0.3928 lr 2.87e-04 | 24.8s | val mIoU 65.98 (best 67.08)
+[  61/80] loss 0.3812 lr 2.75e-04 | 27.3s
+[  62/80] loss 0.3864 lr 2.61e-04 | 29.1s
+[  63/80] loss 0.3760 lr 2.48e-04 | 26.6s
+[  64/80] loss 0.3694 lr 2.35e-04 | 26.8s
+[  65/80] loss 0.3693 lr 2.22e-04 | 22.9s | val mIoU 67.76 (best 67.76)
+[  66/80] loss 0.3767 lr 2.09e-04 | 31.5s
+[  67/80] loss 0.3695 lr 1.95e-04 | 28.1s
+[  68/80] loss 0.3729 lr 1.82e-04 | 24.3s
+[  69/80] loss 0.3525 lr 1.68e-04 | 24.2s
+[  70/80] loss 0.3725 lr 1.54e-04 | 28.9s | val mIoU 65.86 (best 67.76)
+[  71/80] loss 0.3618 lr 1.40e-04 | 24.5s
+[  72/80] loss 0.3603 lr 1.26e-04 | 24.2s
+[  73/80] loss 0.3552 lr 1.12e-04 | 24.6s
+[  74/80] loss 0.3518 lr 9.75e-05 | 28.4s
+[  75/80] loss 0.3565 lr 8.28e-05 | 29.4s | val mIoU 67.98 (best 67.98)
+[  76/80] loss 0.3526 lr 6.78e-05 | 29.3s
+[  77/80] loss 0.3454 lr 5.24e-05 | 27.2s
+[  78/80] loss 0.3415 lr 3.65e-05 | 25.8s
+[  79/80] loss 0.3410 lr 1.98e-05 | 27.7s
+[  80/80] loss 0.3425 lr 6.30e-07 | 29.9s | val mIoU 67.89 (best 67.98)
+==> TEST (best val checkpoint, epoch 75): mIoU 56.24 | pixel acc 86.16
+    0.727M params | 4.99 GMACs | FPS eager 15.7, CUDA graph 72.2 | trained in 32.0 min | peak 4.17 GB
+[14:18:37] done lmiinet_no_cc in 34.2 min
+[14:18:37] train lmiinet_no_tf: train.py --model lmiinet_no_tf --epochs 80 --seed 42 --workers 2 --train-fraction 1.0
+==> run 'lmiinet_no_tf' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet_no_tf
+    train 367 images (fraction 1.0), val 101, data on GPU
+    lmiinet_no_tf: 517,560 params | precision bf16 | step mode eager
+[   1/80] loss 3.2665 lr 9.89e-04 | 101.9s
+[   2/80] loss 2.0149 lr 9.78e-04 | 15.0s
+[   3/80] loss 1.6519 lr 9.66e-04 | 14.7s
+[   4/80] loss 1.4402 lr 9.55e-04 | 14.5s
+[   5/80] loss 1.3145 lr 9.44e-04 | 14.8s | val mIoU 37.63 (best 37.63)
+[   6/80] loss 1.2130 lr 9.32e-04 | 17.0s
+[   7/80] loss 1.1818 lr 9.21e-04 | 16.1s
+[   8/80] loss 1.0853 lr 9.10e-04 | 15.4s
+[   9/80] loss 1.0260 lr 8.98e-04 | 15.1s
+[  10/80] loss 0.9905 lr 8.87e-04 | 15.2s | val mIoU 50.34 (best 50.34)
+[  11/80] loss 0.9646 lr 8.76e-04 | 15.9s
+[  12/80] loss 0.9139 lr 8.64e-04 | 16.0s
+[  13/80] loss 0.8767 lr 8.53e-04 | 14.5s
+[  14/80] loss 0.8481 lr 8.41e-04 | 14.9s
+[  15/80] loss 0.8395 lr 8.30e-04 | 14.7s | val mIoU 51.26 (best 51.26)
+[  16/80] loss 0.8110 lr 8.18e-04 | 15.3s
+[  17/80] loss 0.8012 lr 8.07e-04 | 15.1s
+[  18/80] loss 0.7628 lr 7.95e-04 | 15.5s
+[  19/80] loss 0.7612 lr 7.84e-04 | 15.6s
+[  20/80] loss 0.7464 lr 7.72e-04 | 14.4s | val mIoU 55.17 (best 55.17)
+[  21/80] loss 0.7387 lr 7.61e-04 | 14.2s
+[  22/80] loss 0.7031 lr 7.49e-04 | 14.4s
+[  23/80] loss 0.6815 lr 7.37e-04 | 14.2s
+[  24/80] loss 0.6840 lr 7.26e-04 | 14.5s
+[  25/80] loss 0.6649 lr 7.14e-04 | 14.3s | val mIoU 61.01 (best 61.01)
+[  26/80] loss 0.6417 lr 7.02e-04 | 14.6s
+[  27/80] loss 0.6815 lr 6.91e-04 | 14.0s
+[  28/80] loss 0.6497 lr 6.79e-04 | 14.1s
+[  29/80] loss 0.6415 lr 6.67e-04 | 14.1s
+[  30/80] loss 0.6114 lr 6.55e-04 | 14.1s | val mIoU 50.32 (best 61.01)
+[  31/80] loss 0.6249 lr 6.44e-04 | 14.3s
+[  32/80] loss 0.6063 lr 6.32e-04 | 14.0s
+[  33/80] loss 0.5810 lr 6.20e-04 | 14.1s
+[  34/80] loss 0.5785 lr 6.08e-04 | 14.1s
+[  35/80] loss 0.5905 lr 5.96e-04 | 14.6s | val mIoU 63.27 (best 63.27)
+[  36/80] loss 0.5672 lr 5.84e-04 | 14.7s
+[  37/80] loss 0.5521 lr 5.72e-04 | 15.1s
+[  38/80] loss 0.5538 lr 5.60e-04 | 14.7s
+[  39/80] loss 0.5474 lr 5.48e-04 | 15.0s
+[  40/80] loss 0.5325 lr 5.36e-04 | 15.1s | val mIoU 63.14 (best 63.27)
+[  41/80] loss 0.5325 lr 5.24e-04 | 15.3s
+[  42/80] loss 0.5245 lr 5.12e-04 | 17.3s
+[  43/80] loss 0.5148 lr 5.00e-04 | 18.4s
+[  44/80] loss 0.5303 lr 4.88e-04 | 18.1s
+[  45/80] loss 0.5212 lr 4.75e-04 | 16.9s | val mIoU 61.66 (best 63.27)
+[  46/80] loss 0.5174 lr 4.63e-04 | 17.5s
+[  47/80] loss 0.4928 lr 4.51e-04 | 15.3s
+[  48/80] loss 0.5101 lr 4.39e-04 | 17.7s
+[  49/80] loss 0.4863 lr 4.26e-04 | 17.7s
+[  50/80] loss 0.4888 lr 4.14e-04 | 17.6s | val mIoU 64.49 (best 64.49)
+[  51/80] loss 0.4983 lr 4.01e-04 | 16.6s
+[  52/80] loss 0.4928 lr 3.89e-04 | 17.8s
+[  53/80] loss 0.4971 lr 3.77e-04 | 17.9s
+[  54/80] loss 0.4810 lr 3.64e-04 | 17.2s
+[  55/80] loss 0.4631 lr 3.51e-04 | 17.8s | val mIoU 62.92 (best 64.49)
+[  56/80] loss 0.4614 lr 3.39e-04 | 16.1s
+[  57/80] loss 0.4665 lr 3.26e-04 | 18.1s
+[  58/80] loss 0.4563 lr 3.13e-04 | 17.5s
+[  59/80] loss 0.4549 lr 3.00e-04 | 16.4s
+[  60/80] loss 0.4591 lr 2.87e-04 | 16.0s | val mIoU 63.82 (best 64.49)
+[  61/80] loss 0.4450 lr 2.75e-04 | 15.9s
+[  62/80] loss 0.4424 lr 2.61e-04 | 15.4s
+[  63/80] loss 0.4320 lr 2.48e-04 | 16.4s
+[  64/80] loss 0.4334 lr 2.35e-04 | 15.7s
+[  65/80] loss 0.4292 lr 2.22e-04 | 14.5s | val mIoU 63.92 (best 64.49)
+[  66/80] loss 0.4319 lr 2.09e-04 | 14.3s
+[  67/80] loss 0.4244 lr 1.95e-04 | 14.1s
+[  68/80] loss 0.4308 lr 1.82e-04 | 14.1s
+[  69/80] loss 0.4054 lr 1.68e-04 | 14.1s
+[  70/80] loss 0.4379 lr 1.54e-04 | 14.2s | val mIoU 65.97 (best 65.97)
+[  71/80] loss 0.4137 lr 1.40e-04 | 14.2s
+[  72/80] loss 0.4132 lr 1.26e-04 | 14.1s
+[  73/80] loss 0.4169 lr 1.12e-04 | 14.3s
+[  74/80] loss 0.4085 lr 9.75e-05 | 15.6s
+[  75/80] loss 0.4125 lr 8.28e-05 | 14.1s | val mIoU 65.71 (best 65.97)
+[  76/80] loss 0.4078 lr 6.78e-05 | 14.1s
+[  77/80] loss 0.3973 lr 5.24e-05 | 14.1s
+[  78/80] loss 0.3988 lr 3.65e-05 | 14.0s
+[  79/80] loss 0.4023 lr 1.98e-05 | 14.0s
+[  80/80] loss 0.4076 lr 6.30e-07 | 14.1s | val mIoU 65.15 (best 65.97)
+==> TEST (best val checkpoint, epoch 70): mIoU 54.58 | pixel acc 85.20
+    0.518M params | 4.41 GMACs | FPS eager 18.8, CUDA graph 82.5 | trained in 23.6 min | peak 3.99 GB
+[14:44:07] done lmiinet_no_tf in 25.5 min
+[14:44:07] train lmiinet_no_cru: train.py --model lmiinet_no_cru --epochs 80 --seed 42 --workers 2 --train-fraction 1.0
+==> run 'lmiinet_no_cru' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet_no_cru
+    train 367 images (fraction 1.0), val 101, data on GPU
+    lmiinet_no_cru: 570,273 params | precision bf16 | step mode eager
+[   1/80] loss 2.7850 lr 9.89e-04 | 72.8s
+[   2/80] loss 1.7891 lr 9.78e-04 | 11.6s
+[   3/80] loss 1.5220 lr 9.66e-04 | 11.1s
+[   4/80] loss 1.3534 lr 9.55e-04 | 11.2s
+[   5/80] loss 1.2246 lr 9.44e-04 | 11.0s | val mIoU 42.52 (best 42.52)
+[   6/80] loss 1.1691 lr 9.32e-04 | 10.8s
+[   7/80] loss 1.1026 lr 9.21e-04 | 10.7s
+[   8/80] loss 1.0348 lr 9.10e-04 | 11.1s
+[   9/80] loss 0.9538 lr 8.98e-04 | 10.9s
+[  10/80] loss 0.9398 lr 8.87e-04 | 10.7s | val mIoU 53.22 (best 53.22)
+[  11/80] loss 0.9207 lr 8.76e-04 | 10.9s
+[  12/80] loss 0.8669 lr 8.64e-04 | 11.6s
+[  13/80] loss 0.8327 lr 8.53e-04 | 11.0s
+[  14/80] loss 0.7862 lr 8.41e-04 | 11.2s
+[  15/80] loss 0.7950 lr 8.30e-04 | 10.9s | val mIoU 55.63 (best 55.63)
+[  16/80] loss 0.7470 lr 8.18e-04 | 11.7s
+[  17/80] loss 0.7390 lr 8.07e-04 | 11.9s
+[  18/80] loss 0.7234 lr 7.95e-04 | 11.7s
+[  19/80] loss 0.7140 lr 7.84e-04 | 12.0s
+[  20/80] loss 0.6932 lr 7.72e-04 | 11.7s | val mIoU 59.15 (best 59.15)
+[  21/80] loss 0.6681 lr 7.61e-04 | 11.4s
+[  22/80] loss 0.6494 lr 7.49e-04 | 11.3s
+[  23/80] loss 0.6313 lr 7.37e-04 | 11.1s
+[  24/80] loss 0.6352 lr 7.26e-04 | 11.8s
+[  25/80] loss 0.6197 lr 7.14e-04 | 11.4s | val mIoU 61.76 (best 61.76)
+[  26/80] loss 0.5928 lr 7.02e-04 | 11.0s
+[  27/80] loss 0.5927 lr 6.91e-04 | 11.1s
+[  28/80] loss 0.5771 lr 6.79e-04 | 10.8s
+[  29/80] loss 0.5841 lr 6.67e-04 | 10.8s
+[  30/80] loss 0.5600 lr 6.55e-04 | 11.2s | val mIoU 57.84 (best 61.76)
+[  31/80] loss 0.5611 lr 6.44e-04 | 11.2s
+[  32/80] loss 0.5531 lr 6.32e-04 | 10.7s
+[  33/80] loss 0.5290 lr 6.20e-04 | 11.2s
+[  34/80] loss 0.5476 lr 6.08e-04 | 11.1s
+[  35/80] loss 0.5414 lr 5.96e-04 | 10.8s | val mIoU 63.13 (best 63.13)
+[  36/80] loss 0.5238 lr 5.84e-04 | 10.7s
+[  37/80] loss 0.5046 lr 5.72e-04 | 10.8s
+[  38/80] loss 0.4918 lr 5.60e-04 | 10.7s
+[  39/80] loss 0.4969 lr 5.48e-04 | 10.6s
+[  40/80] loss 0.4698 lr 5.36e-04 | 10.8s | val mIoU 64.02 (best 64.02)
+[  41/80] loss 0.4827 lr 5.24e-04 | 10.7s
+[  42/80] loss 0.4744 lr 5.12e-04 | 10.7s
+[  43/80] loss 0.4604 lr 5.00e-04 | 10.6s
+[  44/80] loss 0.4762 lr 4.88e-04 | 13.6s
+[  45/80] loss 0.4609 lr 4.75e-04 | 11.7s | val mIoU 63.76 (best 64.02)
+[  46/80] loss 0.4671 lr 4.63e-04 | 12.8s
+[  47/80] loss 0.4449 lr 4.51e-04 | 12.5s
+[  48/80] loss 0.4499 lr 4.39e-04 | 12.6s
+[  49/80] loss 0.4383 lr 4.26e-04 | 12.6s
+[  50/80] loss 0.4324 lr 4.14e-04 | 12.5s | val mIoU 66.14 (best 66.14)
+[  51/80] loss 0.4366 lr 4.01e-04 | 12.5s
+[  52/80] loss 0.4504 lr 3.89e-04 | 12.9s
+[  53/80] loss 0.4496 lr 3.77e-04 | 12.5s
+[  54/80] loss 0.4325 lr 3.64e-04 | 11.6s
+[  55/80] loss 0.4125 lr 3.51e-04 | 11.4s | val mIoU 67.84 (best 67.84)
+[  56/80] loss 0.4199 lr 3.39e-04 | 11.5s
+[  57/80] loss 0.4179 lr 3.26e-04 | 10.8s
+[  58/80] loss 0.4052 lr 3.13e-04 | 14.8s
+[  59/80] loss 0.3983 lr 3.00e-04 | 20.3s
+[  60/80] loss 0.4038 lr 2.87e-04 | 20.2s | val mIoU 65.70 (best 67.84)
+[  61/80] loss 0.4011 lr 2.75e-04 | 20.3s
+[  62/80] loss 0.3927 lr 2.61e-04 | 21.6s
+[  63/80] loss 0.3887 lr 2.48e-04 | 20.4s
+[  64/80] loss 0.3797 lr 2.35e-04 | 20.2s
+[  65/80] loss 0.3815 lr 2.22e-04 | 20.3s | val mIoU 67.42 (best 67.84)
+[  66/80] loss 0.3773 lr 2.09e-04 | 20.2s
+[  67/80] loss 0.3795 lr 1.95e-04 | 20.3s
+[  68/80] loss 0.3761 lr 1.82e-04 | 20.3s
+[  69/80] loss 0.3554 lr 1.68e-04 | 20.2s
+[  70/80] loss 0.3775 lr 1.54e-04 | 20.9s | val mIoU 67.12 (best 67.84)
+[  71/80] loss 0.3656 lr 1.40e-04 | 20.1s
+[  72/80] loss 0.3740 lr 1.26e-04 | 20.1s
+[  73/80] loss 0.3662 lr 1.12e-04 | 20.2s
+[  74/80] loss 0.3573 lr 9.75e-05 | 20.2s
+[  75/80] loss 0.3632 lr 8.28e-05 | 20.3s | val mIoU 67.82 (best 67.84)
+[  76/80] loss 0.3581 lr 6.78e-05 | 20.1s
+[  77/80] loss 0.3486 lr 5.24e-05 | 20.1s
+[  78/80] loss 0.3489 lr 3.65e-05 | 20.1s
+[  79/80] loss 0.3453 lr 1.98e-05 | 20.7s
+[  80/80] loss 0.3494 lr 6.30e-07 | 20.2s | val mIoU 67.68 (best 67.84)
+==> TEST (best val checkpoint, epoch 55): mIoU 54.56 | pixel acc 84.90
+    0.570M params | 4.03 GMACs | FPS eager 25.0, CUDA graph 104.9 | trained in 21.0 min | peak 3.89 GB
+[15:06:40] done lmiinet_no_cru in 22.6 min
+[15:06:40] train lmiinet_no_fe: train.py --model lmiinet_no_fe --epochs 80 --seed 42 --workers 2 --train-fraction 1.0
+==> run 'lmiinet_no_fe' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet_no_fe
+    train 367 images (fraction 1.0), val 101, data on GPU
+    lmiinet_no_fe: 725,431 params | precision bf16 | step mode eager
+[   1/80] loss 2.9832 lr 9.89e-04 | 122.9s
+[   2/80] loss 1.8072 lr 9.78e-04 | 14.9s
+[   3/80] loss 1.5492 lr 9.66e-04 | 14.4s
+[   4/80] loss 1.3176 lr 9.55e-04 | 14.5s
+[   5/80] loss 1.2052 lr 9.44e-04 | 14.4s | val mIoU 41.56 (best 41.56)
+[   6/80] loss 1.1071 lr 9.32e-04 | 14.4s
+[   7/80] loss 1.0996 lr 9.21e-04 | 14.3s
+[   8/80] loss 1.0087 lr 9.10e-04 | 14.4s
+[   9/80] loss 0.9449 lr 8.98e-04 | 16.0s
+[  10/80] loss 0.9145 lr 8.87e-04 | 16.4s | val mIoU 44.28 (best 44.28)
+[  11/80] loss 0.8965 lr 8.76e-04 | 15.1s
+[  12/80] loss 0.8584 lr 8.64e-04 | 15.4s
+[  13/80] loss 0.8157 lr 8.53e-04 | 15.7s
+[  14/80] loss 0.7643 lr 8.41e-04 | 14.5s
+[  15/80] loss 0.7679 lr 8.30e-04 | 14.8s | val mIoU 56.76 (best 56.76)
+[  16/80] loss 0.7493 lr 8.18e-04 | 14.7s
+[  17/80] loss 0.7360 lr 8.07e-04 | 14.7s
+[  18/80] loss 0.6877 lr 7.95e-04 | 15.6s
+[  19/80] loss 0.6986 lr 7.84e-04 | 15.6s
+[  20/80] loss 0.6850 lr 7.72e-04 | 16.3s | val mIoU 54.51 (best 56.76)
+[  21/80] loss 0.6574 lr 7.61e-04 | 19.6s
+[  22/80] loss 0.6369 lr 7.49e-04 | 21.9s
+[  23/80] loss 0.6460 lr 7.37e-04 | 19.1s
+[  24/80] loss 0.6343 lr 7.26e-04 | 21.8s
+[  25/80] loss 0.6048 lr 7.14e-04 | 21.8s | val mIoU 60.54 (best 60.54)
+[  26/80] loss 0.5749 lr 7.02e-04 | 22.7s
+[  27/80] loss 0.5909 lr 6.91e-04 | 22.5s
+[  28/80] loss 0.5758 lr 6.79e-04 | 22.5s
+[  29/80] loss 0.5633 lr 6.67e-04 | 22.6s
+[  30/80] loss 0.5518 lr 6.55e-04 | 22.8s | val mIoU 57.12 (best 60.54)
+[  31/80] loss 0.5606 lr 6.44e-04 | 22.7s
+[  32/80] loss 0.5480 lr 6.32e-04 | 23.7s
+[  33/80] loss 0.5328 lr 6.20e-04 | 18.5s
+[  34/80] loss 0.5263 lr 6.08e-04 | 21.4s
+[  35/80] loss 0.5147 lr 5.96e-04 | 21.6s | val mIoU 64.96 (best 64.96)
+[  36/80] loss 0.4992 lr 5.84e-04 | 21.2s
+[  37/80] loss 0.4785 lr 5.72e-04 | 21.6s
+[  38/80] loss 0.4935 lr 5.60e-04 | 21.2s
+[  39/80] loss 0.4840 lr 5.48e-04 | 21.3s
+[  40/80] loss 0.4715 lr 5.36e-04 | 21.2s | val mIoU 62.09 (best 64.96)
+[  41/80] loss 0.4696 lr 5.24e-04 | 21.4s
+[  42/80] loss 0.4714 lr 5.12e-04 | 21.2s
+[  43/80] loss 0.4494 lr 5.00e-04 | 21.4s
+[  44/80] loss 0.4626 lr 4.88e-04 | 21.8s
+[  45/80] loss 0.4557 lr 4.75e-04 | 21.4s | val mIoU 63.57 (best 64.96)
+[  46/80] loss 0.4590 lr 4.63e-04 | 21.3s
+[  47/80] loss 0.4390 lr 4.51e-04 | 21.4s
+[  48/80] loss 0.4403 lr 4.39e-04 | 21.3s
+[  49/80] loss 0.4258 lr 4.26e-04 | 21.5s
+[  50/80] loss 0.4307 lr 4.14e-04 | 22.0s | val mIoU 65.35 (best 65.35)
+[  51/80] loss 0.4287 lr 4.01e-04 | 21.1s
+[  52/80] loss 0.4264 lr 3.89e-04 | 21.4s
+[  53/80] loss 0.4267 lr 3.77e-04 | 21.6s
+[  54/80] loss 0.4133 lr 3.64e-04 | 21.2s
+[  55/80] loss 0.4079 lr 3.51e-04 | 21.0s | val mIoU 65.47 (best 65.47)
+[  56/80] loss 0.4081 lr 3.39e-04 | 21.2s
+[  57/80] loss 0.4040 lr 3.26e-04 | 21.2s
+[  58/80] loss 0.3992 lr 3.13e-04 | 20.9s
+[  59/80] loss 0.3927 lr 3.00e-04 | 21.3s
+[  60/80] loss 0.3953 lr 2.87e-04 | 21.3s | val mIoU 65.78 (best 65.78)
+[  61/80] loss 0.3938 lr 2.75e-04 | 21.1s
+[  62/80] loss 0.3901 lr 2.61e-04 | 21.2s
+[  63/80] loss 0.3770 lr 2.48e-04 | 21.3s
+[  64/80] loss 0.3756 lr 2.35e-04 | 21.2s
+[  65/80] loss 0.3734 lr 2.22e-04 | 21.1s | val mIoU 67.18 (best 67.18)
+[  66/80] loss 0.3708 lr 2.09e-04 | 21.0s
+[  67/80] loss 0.3690 lr 1.95e-04 | 21.1s
+[  68/80] loss 0.3687 lr 1.82e-04 | 21.2s
+[  69/80] loss 0.3482 lr 1.68e-04 | 21.1s
+[  70/80] loss 0.3771 lr 1.54e-04 | 21.1s | val mIoU 66.93 (best 67.18)
+[  71/80] loss 0.3632 lr 1.40e-04 | 21.2s
+[  72/80] loss 0.3632 lr 1.26e-04 | 21.1s
+[  73/80] loss 0.3606 lr 1.12e-04 | 21.0s
+[  74/80] loss 0.3494 lr 9.75e-05 | 21.1s
+[  75/80] loss 0.3569 lr 8.28e-05 | 21.3s | val mIoU 66.41 (best 67.18)
+[  76/80] loss 0.3496 lr 6.78e-05 | 21.1s
+[  77/80] loss 0.3443 lr 5.24e-05 | 21.2s
+[  78/80] loss 0.3422 lr 3.65e-05 | 20.9s
+[  79/80] loss 0.3387 lr 1.98e-05 | 21.3s
+[  80/80] loss 0.3403 lr 6.30e-07 | 21.1s | val mIoU 66.69 (best 67.18)
+==> TEST (best val checkpoint, epoch 65): mIoU 54.15 | pixel acc 84.36
+    0.725M params | 4.97 GMACs | FPS eager 11.5, CUDA graph 65.9 | trained in 30.3 min | peak 4.01 GB
+[15:39:37] done lmiinet_no_fe in 32.9 min
+[15:39:37] train lmiinet_frac0.25: train.py --model lmiinet --epochs 320 --seed 42 --workers 2 --train-fraction 0.25
+==> run 'lmiinet_frac0.25' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet_frac0.25
+    train 92 images (fraction 0.25), val 101, data on GPU
+    lmiinet: 727,073 params | precision bf16 | step mode eager
+[   1/320] loss 4.1825 lr 9.97e-04 | 154.6s
+[   2/320] loss 2.6223 lr 9.95e-04 | 5.5s
+[   3/320] loss 2.1901 lr 9.92e-04 | 5.2s
+[   4/320] loss 1.8735 lr 9.89e-04 | 5.2s
+[   5/320] loss 1.7597 lr 9.86e-04 | 5.2s | val mIoU 29.96 (best 29.96)
+[   6/320] loss 1.5559 lr 9.83e-04 | 5.5s
+[   7/320] loss 1.4984 lr 9.81e-04 | 5.4s
+[   8/320] loss 1.4469 lr 9.78e-04 | 5.4s
+[   9/320] loss 1.4349 lr 9.75e-04 | 5.4s
+[  10/320] loss 1.4133 lr 9.72e-04 | 5.4s | val mIoU 41.92 (best 41.92)
+[  11/320] loss 1.3772 lr 9.69e-04 | 5.3s
+[  12/320] loss 1.3037 lr 9.66e-04 | 5.3s
+[  13/320] loss 1.2480 lr 9.64e-04 | 5.4s
+[  14/320] loss 1.2593 lr 9.61e-04 | 5.5s
+[  15/320] loss 1.2983 lr 9.58e-04 | 5.5s | val mIoU 37.53 (best 41.92)
+[  16/320] loss 1.1753 lr 9.55e-04 | 5.6s
+[  17/320] loss 1.1619 lr 9.52e-04 | 5.3s
+[  18/320] loss 1.1649 lr 9.49e-04 | 5.4s
+[  19/320] loss 1.1143 lr 9.47e-04 | 5.5s
+[  20/320] loss 1.1289 lr 9.44e-04 | 5.4s | val mIoU 43.48 (best 43.48)
+[  21/320] loss 1.0352 lr 9.41e-04 | 5.3s
+[  22/320] loss 1.0841 lr 9.38e-04 | 5.3s
+[  23/320] loss 1.0230 lr 9.35e-04 | 5.5s
+[  24/320] loss 1.0515 lr 9.32e-04 | 5.5s
+[  25/320] loss 1.0239 lr 9.30e-04 | 5.5s | val mIoU 41.07 (best 43.48)
+[  26/320] loss 1.0391 lr 9.27e-04 | 5.3s
+[  27/320] loss 1.0102 lr 9.24e-04 | 5.5s
+[  28/320] loss 1.0031 lr 9.21e-04 | 5.6s
+[  29/320] loss 1.0216 lr 9.18e-04 | 5.5s
+[  30/320] loss 0.9356 lr 9.15e-04 | 5.4s | val mIoU 51.99 (best 51.99)
+[  31/320] loss 0.9434 lr 9.13e-04 | 5.5s
+[  32/320] loss 0.9397 lr 9.10e-04 | 5.4s
+[  33/320] loss 0.8914 lr 9.07e-04 | 5.5s
+[  34/320] loss 0.8735 lr 9.04e-04 | 5.6s
+[  35/320] loss 0.8815 lr 9.01e-04 | 5.4s | val mIoU 45.67 (best 51.99)
+[  36/320] loss 0.8430 lr 8.98e-04 | 5.4s
+[  37/320] loss 0.8287 lr 8.96e-04 | 5.6s
+[  38/320] loss 0.8329 lr 8.93e-04 | 5.6s
+[  39/320] loss 0.8580 lr 8.90e-04 | 5.6s
+[  40/320] loss 0.8337 lr 8.87e-04 | 5.4s | val mIoU 49.78 (best 51.99)
+[  41/320] loss 0.8752 lr 8.84e-04 | 5.4s
+[  42/320] loss 0.8491 lr 8.81e-04 | 5.7s
+[  43/320] loss 0.7931 lr 8.78e-04 | 5.5s
+[  44/320] loss 0.8372 lr 8.76e-04 | 5.3s
+[  45/320] loss 0.7856 lr 8.73e-04 | 5.3s | val mIoU 52.79 (best 52.79)
+[  46/320] loss 0.7233 lr 8.70e-04 | 5.4s
+[  47/320] loss 0.7763 lr 8.67e-04 | 5.6s
+[  48/320] loss 0.7516 lr 8.64e-04 | 5.5s
+[  49/320] loss 0.7195 lr 8.61e-04 | 5.4s
+[  50/320] loss 0.7166 lr 8.58e-04 | 5.3s | val mIoU 52.27 (best 52.79)
+[  51/320] loss 0.7158 lr 8.56e-04 | 5.5s
+[  52/320] loss 0.7501 lr 8.53e-04 | 5.5s
+[  53/320] loss 0.6962 lr 8.50e-04 | 5.4s
+[  54/320] loss 0.7289 lr 8.47e-04 | 5.3s
+[  55/320] loss 0.6590 lr 8.44e-04 | 5.3s | val mIoU 53.10 (best 53.10)
+[  56/320] loss 0.7070 lr 8.41e-04 | 5.4s
+[  57/320] loss 0.6805 lr 8.38e-04 | 5.5s
+[  58/320] loss 0.6972 lr 8.36e-04 | 5.3s
+[  59/320] loss 0.6895 lr 8.33e-04 | 5.3s
+[  60/320] loss 0.6755 lr 8.30e-04 | 5.4s | val mIoU 56.51 (best 56.51)
+[  61/320] loss 0.6640 lr 8.27e-04 | 5.5s
+[  62/320] loss 0.6737 lr 8.24e-04 | 5.7s
+[  63/320] loss 0.6872 lr 8.21e-04 | 5.5s
+[  64/320] loss 0.6448 lr 8.18e-04 | 5.5s
+[  65/320] loss 0.6521 lr 8.15e-04 | 5.4s | val mIoU 56.15 (best 56.51)
+[  66/320] loss 0.6580 lr 8.13e-04 | 5.5s
+[  67/320] loss 0.6381 lr 8.10e-04 | 5.5s
+[  68/320] loss 0.6109 lr 8.07e-04 | 5.5s
+[  69/320] loss 0.6066 lr 8.04e-04 | 5.5s
+[  70/320] loss 0.6259 lr 8.01e-04 | 5.3s | val mIoU 55.79 (best 56.51)
+[  71/320] loss 0.6069 lr 7.98e-04 | 5.5s
+[  72/320] loss 0.6179 lr 7.95e-04 | 5.4s
+[  73/320] loss 0.6408 lr 7.92e-04 | 5.4s
+[  74/320] loss 0.5932 lr 7.89e-04 | 5.3s
+[  75/320] loss 0.5940 lr 7.87e-04 | 5.2s | val mIoU 57.96 (best 57.96)
+[  76/320] loss 0.5986 lr 7.84e-04 | 5.6s
+[  77/320] loss 0.6061 lr 7.81e-04 | 5.6s
+[  78/320] loss 0.6143 lr 7.78e-04 | 5.6s
+[  79/320] loss 0.5978 lr 7.75e-04 | 5.3s
+[  80/320] loss 0.5801 lr 7.72e-04 | 5.5s | val mIoU 58.47 (best 58.47)
+[  81/320] loss 0.5677 lr 7.69e-04 | 5.5s
+[  82/320] loss 0.5596 lr 7.66e-04 | 5.4s
+[  83/320] loss 0.5781 lr 7.63e-04 | 5.5s
+[  84/320] loss 0.5489 lr 7.61e-04 | 5.3s
+[  85/320] loss 0.5929 lr 7.58e-04 | 5.3s | val mIoU 55.04 (best 58.47)
+[  86/320] loss 0.5624 lr 7.55e-04 | 5.4s
+[  87/320] loss 0.5577 lr 7.52e-04 | 5.4s
+[  88/320] loss 0.5523 lr 7.49e-04 | 5.3s
+[  89/320] loss 0.5205 lr 7.46e-04 | 5.4s
+[  90/320] loss 0.5369 lr 7.43e-04 | 5.5s | val mIoU 58.83 (best 58.83)
+[  91/320] loss 0.4966 lr 7.40e-04 | 5.5s
+[  92/320] loss 0.5375 lr 7.37e-04 | 5.7s
+[  93/320] loss 0.5241 lr 7.34e-04 | 5.6s
+[  94/320] loss 0.5270 lr 7.32e-04 | 5.4s
+[  95/320] loss 0.5521 lr 7.29e-04 | 5.4s | val mIoU 61.62 (best 61.62)
+[  96/320] loss 0.5052 lr 7.26e-04 | 5.6s
+[  97/320] loss 0.5207 lr 7.23e-04 | 5.5s
+[  98/320] loss 0.5227 lr 7.20e-04 | 5.6s
+[  99/320] loss 0.4950 lr 7.17e-04 | 5.6s
+[ 100/320] loss 0.4914 lr 7.14e-04 | 5.8s | val mIoU 60.62 (best 61.62)
+[ 101/320] loss 0.4806 lr 7.11e-04 | 5.4s
+[ 102/320] loss 0.4865 lr 7.08e-04 | 5.4s
+[ 103/320] loss 0.4893 lr 7.05e-04 | 5.5s
+[ 104/320] loss 0.5108 lr 7.02e-04 | 5.6s
+[ 105/320] loss 0.4837 lr 6.99e-04 | 5.4s | val mIoU 59.06 (best 61.62)
+[ 106/320] loss 0.5245 lr 6.96e-04 | 5.5s
+[ 107/320] loss 0.5078 lr 6.94e-04 | 5.3s
+[ 108/320] loss 0.5084 lr 6.91e-04 | 5.5s
+[ 109/320] loss 0.5031 lr 6.88e-04 | 5.4s
+[ 110/320] loss 0.4633 lr 6.85e-04 | 5.4s | val mIoU 60.54 (best 61.62)
+[ 111/320] loss 0.4685 lr 6.82e-04 | 5.4s
+[ 112/320] loss 0.4856 lr 6.79e-04 | 5.4s
+[ 113/320] loss 0.4606 lr 6.76e-04 | 5.4s
+[ 114/320] loss 0.4721 lr 6.73e-04 | 5.9s
+[ 115/320] loss 0.4680 lr 6.70e-04 | 5.5s | val mIoU 61.04 (best 61.62)
+[ 116/320] loss 0.4762 lr 6.67e-04 | 5.4s
+[ 117/320] loss 0.4646 lr 6.64e-04 | 5.5s
+[ 118/320] loss 0.4817 lr 6.61e-04 | 5.3s
+[ 119/320] loss 0.4681 lr 6.58e-04 | 5.1s
+[ 120/320] loss 0.4231 lr 6.55e-04 | 5.1s | val mIoU 61.13 (best 61.62)
+[ 121/320] loss 0.4526 lr 6.52e-04 | 5.1s
+[ 122/320] loss 0.4586 lr 6.49e-04 | 5.3s
+[ 123/320] loss 0.4519 lr 6.46e-04 | 5.3s
+[ 124/320] loss 0.4484 lr 6.44e-04 | 5.5s
+[ 125/320] loss 0.4256 lr 6.41e-04 | 5.6s | val mIoU 62.40 (best 62.40)
+[ 126/320] loss 0.4251 lr 6.38e-04 | 5.3s
+[ 127/320] loss 0.4170 lr 6.35e-04 | 5.5s
+[ 128/320] loss 0.4358 lr 6.32e-04 | 5.4s
+[ 129/320] loss 0.4566 lr 6.29e-04 | 5.3s
+[ 130/320] loss 0.4392 lr 6.26e-04 | 5.1s | val mIoU 61.72 (best 62.40)
+[ 131/320] loss 0.4323 lr 6.23e-04 | 5.2s
+[ 132/320] loss 0.4140 lr 6.20e-04 | 5.3s
+[ 133/320] loss 0.4114 lr 6.17e-04 | 5.1s
+[ 134/320] loss 0.4161 lr 6.14e-04 | 5.1s
+[ 135/320] loss 0.4199 lr 6.11e-04 | 5.2s | val mIoU 60.71 (best 62.40)
+[ 136/320] loss 0.4217 lr 6.08e-04 | 5.1s
+[ 137/320] loss 0.4325 lr 6.05e-04 | 5.5s
+[ 138/320] loss 0.4259 lr 6.02e-04 | 5.5s
+[ 139/320] loss 0.4162 lr 5.99e-04 | 5.5s
+[ 140/320] loss 0.4161 lr 5.96e-04 | 5.5s | val mIoU 64.15 (best 64.15)
+[ 141/320] loss 0.4318 lr 5.93e-04 | 5.6s
+[ 142/320] loss 0.4238 lr 5.90e-04 | 5.4s
+[ 143/320] loss 0.4297 lr 5.87e-04 | 5.3s
+[ 144/320] loss 0.4065 lr 5.84e-04 | 5.4s
+[ 145/320] loss 0.4220 lr 5.81e-04 | 5.5s | val mIoU 62.68 (best 64.15)
+[ 146/320] loss 0.3929 lr 5.78e-04 | 5.4s
+[ 147/320] loss 0.3906 lr 5.75e-04 | 5.3s
+[ 148/320] loss 0.4075 lr 5.72e-04 | 5.5s
+[ 149/320] loss 0.3799 lr 5.69e-04 | 5.5s
+[ 150/320] loss 0.3939 lr 5.66e-04 | 5.3s | val mIoU 65.75 (best 65.75)
+[ 151/320] loss 0.3929 lr 5.63e-04 | 5.1s
+[ 152/320] loss 0.4245 lr 5.60e-04 | 5.4s
+[ 153/320] loss 0.4011 lr 5.57e-04 | 5.2s
+[ 154/320] loss 0.4012 lr 5.54e-04 | 5.0s
+[ 155/320] loss 0.3903 lr 5.51e-04 | 5.2s | val mIoU 60.90 (best 65.75)
+[ 156/320] loss 0.4032 lr 5.48e-04 | 5.1s
+[ 157/320] loss 0.3968 lr 5.45e-04 | 5.2s
+[ 158/320] loss 0.3992 lr 5.42e-04 | 5.2s
+[ 159/320] loss 0.3800 lr 5.39e-04 | 5.4s
+[ 160/320] loss 0.4015 lr 5.36e-04 | 5.1s | val mIoU 64.43 (best 65.75)
+[ 161/320] loss 0.3956 lr 5.33e-04 | 5.3s
+[ 162/320] loss 0.3784 lr 5.30e-04 | 5.2s
+[ 163/320] loss 0.3576 lr 5.27e-04 | 5.1s
+[ 164/320] loss 0.3781 lr 5.24e-04 | 5.5s
+[ 165/320] loss 0.3639 lr 5.21e-04 | 5.5s | val mIoU 63.35 (best 65.75)
+[ 166/320] loss 0.3656 lr 5.18e-04 | 6.5s
+[ 167/320] loss 0.3706 lr 5.15e-04 | 5.5s
+[ 168/320] loss 0.3776 lr 5.12e-04 | 5.6s
+[ 169/320] loss 0.3603 lr 5.09e-04 | 5.4s
+[ 170/320] loss 0.3712 lr 5.06e-04 | 5.4s | val mIoU 65.19 (best 65.75)
+[ 171/320] loss 0.3954 lr 5.03e-04 | 5.5s
+[ 172/320] loss 0.3736 lr 5.00e-04 | 5.6s
+[ 173/320] loss 0.3630 lr 4.97e-04 | 5.6s
+[ 174/320] loss 0.3720 lr 4.94e-04 | 5.4s
+[ 175/320] loss 0.3621 lr 4.91e-04 | 5.4s | val mIoU 64.30 (best 65.75)
+[ 176/320] loss 0.3504 lr 4.88e-04 | 5.5s
+[ 177/320] loss 0.3500 lr 4.85e-04 | 5.5s
+[ 178/320] loss 0.3565 lr 4.82e-04 | 5.3s
+[ 179/320] loss 0.3829 lr 4.79e-04 | 5.4s
+[ 180/320] loss 0.3550 lr 4.75e-04 | 5.5s | val mIoU 65.85 (best 65.85)
+[ 181/320] loss 0.3466 lr 4.72e-04 | 5.4s
+[ 182/320] loss 0.3734 lr 4.69e-04 | 5.6s
+[ 183/320] loss 0.3581 lr 4.66e-04 | 5.6s
+[ 184/320] loss 0.3432 lr 4.63e-04 | 5.4s
+[ 185/320] loss 0.3712 lr 4.60e-04 | 5.3s | val mIoU 66.00 (best 66.00)
+[ 186/320] loss 0.3596 lr 4.57e-04 | 5.1s
+[ 187/320] loss 0.3596 lr 4.54e-04 | 5.3s
+[ 188/320] loss 0.3530 lr 4.51e-04 | 5.2s
+[ 189/320] loss 0.3455 lr 4.48e-04 | 5.2s
+[ 190/320] loss 0.3472 lr 4.45e-04 | 5.2s | val mIoU 63.05 (best 66.00)
+[ 191/320] loss 0.3269 lr 4.42e-04 | 5.0s
+[ 192/320] loss 0.3676 lr 4.39e-04 | 5.1s
+[ 193/320] loss 0.3653 lr 4.36e-04 | 5.3s
+[ 194/320] loss 0.3339 lr 4.32e-04 | 5.1s
+[ 195/320] loss 0.3367 lr 4.29e-04 | 5.0s | val mIoU 66.12 (best 66.12)
+[ 196/320] loss 0.3266 lr 4.26e-04 | 5.2s
+[ 197/320] loss 0.3434 lr 4.23e-04 | 5.1s
+[ 198/320] loss 0.3261 lr 4.20e-04 | 5.1s
+[ 199/320] loss 0.3406 lr 4.17e-04 | 5.3s
+[ 200/320] loss 0.3445 lr 4.14e-04 | 5.3s | val mIoU 61.01 (best 66.12)
+[ 201/320] loss 0.3320 lr 4.11e-04 | 5.1s
+[ 202/320] loss 0.3368 lr 4.08e-04 | 5.2s
+[ 203/320] loss 0.3470 lr 4.05e-04 | 5.1s
+[ 204/320] loss 0.3372 lr 4.01e-04 | 5.1s
+[ 205/320] loss 0.3449 lr 3.98e-04 | 5.2s | val mIoU 64.97 (best 66.12)
+[ 206/320] loss 0.3308 lr 3.95e-04 | 5.1s
+[ 207/320] loss 0.3156 lr 3.92e-04 | 5.1s
+[ 208/320] loss 0.3287 lr 3.89e-04 | 5.2s
+[ 209/320] loss 0.3449 lr 3.86e-04 | 5.2s
+[ 210/320] loss 0.3494 lr 3.83e-04 | 4.1s | val mIoU 61.37 (best 66.12)
+[ 211/320] loss 0.3482 lr 3.80e-04 | 4.0s
+[ 212/320] loss 0.3620 lr 3.77e-04 | 4.1s
+[ 213/320] loss 0.3355 lr 3.73e-04 | 4.1s
+[ 214/320] loss 0.3320 lr 3.70e-04 | 4.1s
+[ 215/320] loss 0.3313 lr 3.67e-04 | 4.2s | val mIoU 64.18 (best 66.12)
+[ 216/320] loss 0.3292 lr 3.64e-04 | 4.1s
+[ 217/320] loss 0.3125 lr 3.61e-04 | 4.1s
+[ 218/320] loss 0.3144 lr 3.58e-04 | 4.1s
+[ 219/320] loss 0.3308 lr 3.54e-04 | 4.1s
+[ 220/320] loss 0.3126 lr 3.51e-04 | 4.1s | val mIoU 65.95 (best 66.12)
+[ 221/320] loss 0.3273 lr 3.48e-04 | 4.2s
+[ 222/320] loss 0.3352 lr 3.45e-04 | 4.1s
+[ 223/320] loss 0.3500 lr 3.42e-04 | 4.2s
+[ 224/320] loss 0.3457 lr 3.39e-04 | 4.1s
+[ 225/320] loss 0.3248 lr 3.35e-04 | 4.1s | val mIoU 65.64 (best 66.12)
+[ 226/320] loss 0.3353 lr 3.32e-04 | 4.1s
+[ 227/320] loss 0.3097 lr 3.29e-04 | 4.1s
+[ 228/320] loss 0.3183 lr 3.26e-04 | 4.1s
+[ 229/320] loss 0.3127 lr 3.23e-04 | 4.1s
+[ 230/320] loss 0.3033 lr 3.20e-04 | 4.2s | val mIoU 65.34 (best 66.12)
+[ 231/320] loss 0.3142 lr 3.16e-04 | 4.3s
+[ 232/320] loss 0.3093 lr 3.13e-04 | 4.4s
+[ 233/320] loss 0.3136 lr 3.10e-04 | 4.5s
+[ 234/320] loss 0.3308 lr 3.07e-04 | 4.3s
+[ 235/320] loss 0.3073 lr 3.04e-04 | 4.3s | val mIoU 66.87 (best 66.87)
+[ 236/320] loss 0.3042 lr 3.00e-04 | 4.4s
+[ 237/320] loss 0.3159 lr 2.97e-04 | 4.4s
+[ 238/320] loss 0.3036 lr 2.94e-04 | 4.5s
+[ 239/320] loss 0.3060 lr 2.91e-04 | 4.5s
+[ 240/320] loss 0.3089 lr 2.87e-04 | 4.4s | val mIoU 66.34 (best 66.87)
+[ 241/320] loss 0.3154 lr 2.84e-04 | 4.4s
+[ 242/320] loss 0.3079 lr 2.81e-04 | 4.5s
+[ 243/320] loss 0.3102 lr 2.78e-04 | 4.5s
+[ 244/320] loss 0.3173 lr 2.75e-04 | 4.5s
+[ 245/320] loss 0.3078 lr 2.71e-04 | 4.4s | val mIoU 65.23 (best 66.87)
+[ 246/320] loss 0.3037 lr 2.68e-04 | 4.5s
+[ 247/320] loss 0.3212 lr 2.65e-04 | 4.4s
+[ 248/320] loss 0.2949 lr 2.61e-04 | 4.4s
+[ 249/320] loss 0.3051 lr 2.58e-04 | 4.4s
+[ 250/320] loss 0.3110 lr 2.55e-04 | 4.4s | val mIoU 66.47 (best 66.87)
+[ 251/320] loss 0.3048 lr 2.52e-04 | 4.2s
+[ 252/320] loss 0.3046 lr 2.48e-04 | 4.2s
+[ 253/320] loss 0.2923 lr 2.45e-04 | 4.2s
+[ 254/320] loss 0.2863 lr 2.42e-04 | 4.1s
+[ 255/320] loss 0.2923 lr 2.39e-04 | 4.1s | val mIoU 65.49 (best 66.87)
+[ 256/320] loss 0.3300 lr 2.35e-04 | 4.1s
+[ 257/320] loss 0.3047 lr 2.32e-04 | 4.2s
+[ 258/320] loss 0.3000 lr 2.29e-04 | 4.1s
+[ 259/320] loss 0.3023 lr 2.25e-04 | 4.2s
+[ 260/320] loss 0.2903 lr 2.22e-04 | 4.1s | val mIoU 66.47 (best 66.87)
+[ 261/320] loss 0.2856 lr 2.19e-04 | 4.2s
+[ 262/320] loss 0.2868 lr 2.15e-04 | 4.1s
+[ 263/320] loss 0.3000 lr 2.12e-04 | 4.3s
+[ 264/320] loss 0.3082 lr 2.09e-04 | 4.6s
+[ 265/320] loss 0.2789 lr 2.05e-04 | 4.7s | val mIoU 66.26 (best 66.87)
+[ 266/320] loss 0.2982 lr 2.02e-04 | 4.7s
+[ 267/320] loss 0.2922 lr 1.99e-04 | 4.7s
+[ 268/320] loss 0.2995 lr 1.95e-04 | 4.5s
+[ 269/320] loss 0.2934 lr 1.92e-04 | 4.5s
+[ 270/320] loss 0.2794 lr 1.88e-04 | 4.5s | val mIoU 66.93 (best 66.93)
+[ 271/320] loss 0.2876 lr 1.85e-04 | 4.4s
+[ 272/320] loss 0.2754 lr 1.82e-04 | 4.4s
+[ 273/320] loss 0.2946 lr 1.78e-04 | 4.5s
+[ 274/320] loss 0.2818 lr 1.75e-04 | 4.2s
+[ 275/320] loss 0.2866 lr 1.71e-04 | 4.6s | val mIoU 67.90 (best 67.90)
+[ 276/320] loss 0.2852 lr 1.68e-04 | 4.3s
+[ 277/320] loss 0.2878 lr 1.65e-04 | 4.4s
+[ 278/320] loss 0.2752 lr 1.61e-04 | 4.4s
+[ 279/320] loss 0.2848 lr 1.58e-04 | 4.4s
+[ 280/320] loss 0.2756 lr 1.54e-04 | 4.3s | val mIoU 67.17 (best 67.90)
+[ 281/320] loss 0.2686 lr 1.51e-04 | 4.5s
+[ 282/320] loss 0.2704 lr 1.47e-04 | 4.3s
+[ 283/320] loss 0.2853 lr 1.44e-04 | 4.4s
+[ 284/320] loss 0.2817 lr 1.40e-04 | 4.3s
+[ 285/320] loss 0.2705 lr 1.37e-04 | 4.3s | val mIoU 67.69 (best 67.90)
+[ 286/320] loss 0.2924 lr 1.33e-04 | 4.3s
+[ 287/320] loss 0.2818 lr 1.30e-04 | 4.6s
+[ 288/320] loss 0.2757 lr 1.26e-04 | 4.3s
+[ 289/320] loss 0.2794 lr 1.23e-04 | 4.1s
+[ 290/320] loss 0.2753 lr 1.19e-04 | 4.1s | val mIoU 67.62 (best 67.90)
+[ 291/320] loss 0.2769 lr 1.16e-04 | 4.0s
+[ 292/320] loss 0.2726 lr 1.12e-04 | 4.0s
+[ 293/320] loss 0.2784 lr 1.08e-04 | 4.0s
+[ 294/320] loss 0.2874 lr 1.05e-04 | 4.0s
+[ 295/320] loss 0.2718 lr 1.01e-04 | 4.0s | val mIoU 67.45 (best 67.90)
+[ 296/320] loss 0.2779 lr 9.75e-05 | 4.2s
+[ 297/320] loss 0.2706 lr 9.39e-05 | 4.1s
+[ 298/320] loss 0.2828 lr 9.02e-05 | 4.0s
+[ 299/320] loss 0.2702 lr 8.65e-05 | 4.0s
+[ 300/320] loss 0.2650 lr 8.28e-05 | 4.0s | val mIoU 66.85 (best 67.90)
+[ 301/320] loss 0.2695 lr 7.91e-05 | 4.1s
+[ 302/320] loss 0.2674 lr 7.53e-05 | 4.0s
+[ 303/320] loss 0.2782 lr 7.16e-05 | 4.0s
+[ 304/320] loss 0.2685 lr 6.78e-05 | 4.1s
+[ 305/320] loss 0.2762 lr 6.40e-05 | 4.0s | val mIoU 67.16 (best 67.90)
+[ 306/320] loss 0.2809 lr 6.02e-05 | 4.0s
+[ 307/320] loss 0.2734 lr 5.63e-05 | 4.1s
+[ 308/320] loss 0.2606 lr 5.24e-05 | 4.0s
+[ 309/320] loss 0.2989 lr 4.85e-05 | 4.0s
+[ 310/320] loss 0.2722 lr 4.46e-05 | 4.0s | val mIoU 66.77 (best 67.90)
+[ 311/320] loss 0.2637 lr 4.06e-05 | 4.0s
+[ 312/320] loss 0.2751 lr 3.65e-05 | 4.0s
+[ 313/320] loss 0.2654 lr 3.24e-05 | 4.0s
+[ 314/320] loss 0.2767 lr 2.83e-05 | 4.0s
+[ 315/320] loss 0.2718 lr 2.41e-05 | 4.0s | val mIoU 66.86 (best 67.90)
+[ 316/320] loss 0.2732 lr 1.98e-05 | 4.0s
+[ 317/320] loss 0.2664 lr 1.54e-05 | 3.9s
+[ 318/320] loss 0.2705 lr 1.08e-05 | 3.9s
+[ 319/320] loss 0.2630 lr 6.02e-06 | 4.0s
+[ 320/320] loss 0.2671 lr 6.43e-07 | 4.0s | val mIoU 66.87 (best 67.90)
+==> TEST (best val checkpoint, epoch 275): mIoU 52.47 | pixel acc 84.99
+    0.727M params | 4.99 GMACs | FPS eager 12.5, CUDA graph 76.2 | trained in 33.9 min | peak 4.08 GB
+[16:16:06] done lmiinet_frac0.25 in 36.5 min
+[16:16:06] train unet_pm_frac0.25: train.py --model unet_pm --epochs 320 --seed 42 --workers 2 --train-fraction 0.25
+==> run 'unet_pm_frac0.25' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\unet_pm_frac0.25
+    train 92 images (fraction 0.25), val 101, data on GPU
+    unet_pm: 753,871 params | precision bf16 | step mode eager
+[   1/320] loss 2.7734 lr 9.97e-04 | 86.3s
+[   2/320] loss 2.2494 lr 9.95e-04 | 1.3s
+[   3/320] loss 2.0669 lr 9.92e-04 | 1.3s
+[   4/320] loss 1.9224 lr 9.89e-04 | 1.3s
+[   5/320] loss 1.8343 lr 9.86e-04 | 1.3s | val mIoU 14.14 (best 14.14)
+[   6/320] loss 1.7632 lr 9.83e-04 | 1.5s
+[   7/320] loss 1.7175 lr 9.81e-04 | 1.3s
+[   8/320] loss 1.6279 lr 9.78e-04 | 1.3s
+[   9/320] loss 1.6174 lr 9.75e-04 | 1.3s
+[  10/320] loss 1.5445 lr 9.72e-04 | 1.3s | val mIoU 27.53 (best 27.53)
+[  11/320] loss 1.4060 lr 9.69e-04 | 1.4s
+[  12/320] loss 1.3679 lr 9.66e-04 | 1.3s
+[  13/320] loss 1.3589 lr 9.64e-04 | 1.3s
+[  14/320] loss 1.2945 lr 9.61e-04 | 1.3s
+[  15/320] loss 1.3193 lr 9.58e-04 | 1.3s | val mIoU 28.36 (best 28.36)
+[  16/320] loss 1.2424 lr 9.55e-04 | 1.3s
+[  17/320] loss 1.2857 lr 9.52e-04 | 1.3s
+[  18/320] loss 1.2430 lr 9.49e-04 | 1.3s
+[  19/320] loss 1.1864 lr 9.47e-04 | 1.3s
+[  20/320] loss 1.2254 lr 9.44e-04 | 1.3s | val mIoU 26.33 (best 28.36)
+[  21/320] loss 1.1955 lr 9.41e-04 | 1.3s
+[  22/320] loss 1.2015 lr 9.38e-04 | 1.3s
+[  23/320] loss 1.1866 lr 9.35e-04 | 1.3s
+[  24/320] loss 1.1404 lr 9.32e-04 | 1.3s
+[  25/320] loss 1.1513 lr 9.30e-04 | 1.3s | val mIoU 32.44 (best 32.44)
+[  26/320] loss 1.1207 lr 9.27e-04 | 1.3s
+[  27/320] loss 1.1273 lr 9.24e-04 | 1.4s
+[  28/320] loss 1.0993 lr 9.21e-04 | 1.3s
+[  29/320] loss 1.0426 lr 9.18e-04 | 1.3s
+[  30/320] loss 1.0008 lr 9.15e-04 | 1.3s | val mIoU 38.64 (best 38.64)
+[  31/320] loss 1.0187 lr 9.13e-04 | 1.3s
+[  32/320] loss 1.0412 lr 9.10e-04 | 1.3s
+[  33/320] loss 0.9841 lr 9.07e-04 | 1.3s
+[  34/320] loss 0.9771 lr 9.04e-04 | 1.4s
+[  35/320] loss 1.0206 lr 9.01e-04 | 1.3s | val mIoU 32.62 (best 38.64)
+[  36/320] loss 0.9292 lr 8.98e-04 | 1.3s
+[  37/320] loss 0.9728 lr 8.96e-04 | 1.4s
+[  38/320] loss 0.9393 lr 8.93e-04 | 1.4s
+[  39/320] loss 0.9871 lr 8.90e-04 | 1.4s
+[  40/320] loss 0.9445 lr 8.87e-04 | 1.3s | val mIoU 37.47 (best 38.64)
+[  41/320] loss 0.9996 lr 8.84e-04 | 1.4s
+[  42/320] loss 0.9579 lr 8.81e-04 | 1.4s
+[  43/320] loss 0.8849 lr 8.78e-04 | 1.4s
+[  44/320] loss 0.9296 lr 8.76e-04 | 1.4s
+[  45/320] loss 0.8763 lr 8.73e-04 | 1.4s | val mIoU 34.91 (best 38.64)
+[  46/320] loss 0.8696 lr 8.70e-04 | 1.4s
+[  47/320] loss 0.9075 lr 8.67e-04 | 1.4s
+[  48/320] loss 0.9174 lr 8.64e-04 | 1.4s
+[  49/320] loss 0.8962 lr 8.61e-04 | 1.4s
+[  50/320] loss 0.8621 lr 8.58e-04 | 1.4s | val mIoU 40.38 (best 40.38)
+[  51/320] loss 0.8247 lr 8.56e-04 | 1.4s
+[  52/320] loss 0.8875 lr 8.53e-04 | 1.4s
+[  53/320] loss 0.7884 lr 8.50e-04 | 1.4s
+[  54/320] loss 0.8584 lr 8.47e-04 | 1.4s
+[  55/320] loss 0.8108 lr 8.44e-04 | 1.4s | val mIoU 39.82 (best 40.38)
+[  56/320] loss 0.8115 lr 8.41e-04 | 1.4s
+[  57/320] loss 0.7979 lr 8.38e-04 | 1.4s
+[  58/320] loss 0.8093 lr 8.36e-04 | 1.4s
+[  59/320] loss 0.7965 lr 8.33e-04 | 1.4s
+[  60/320] loss 0.7830 lr 8.30e-04 | 1.4s | val mIoU 40.67 (best 40.67)
+[  61/320] loss 0.7470 lr 8.27e-04 | 1.4s
+[  62/320] loss 0.7411 lr 8.24e-04 | 1.4s
+[  63/320] loss 0.7744 lr 8.21e-04 | 1.4s
+[  64/320] loss 0.7431 lr 8.18e-04 | 1.4s
+[  65/320] loss 0.7428 lr 8.15e-04 | 1.4s | val mIoU 38.98 (best 40.67)
+[  66/320] loss 0.7796 lr 8.13e-04 | 1.4s
+[  67/320] loss 0.7915 lr 8.10e-04 | 1.4s
+[  68/320] loss 0.7402 lr 8.07e-04 | 1.4s
+[  69/320] loss 0.7679 lr 8.04e-04 | 1.4s
+[  70/320] loss 0.7475 lr 8.01e-04 | 1.4s | val mIoU 45.91 (best 45.91)
+[  71/320] loss 0.6926 lr 7.98e-04 | 1.4s
+[  72/320] loss 0.7262 lr 7.95e-04 | 1.4s
+[  73/320] loss 0.7529 lr 7.92e-04 | 1.4s
+[  74/320] loss 0.6882 lr 7.89e-04 | 1.4s
+[  75/320] loss 0.6988 lr 7.87e-04 | 1.4s | val mIoU 43.62 (best 45.91)
+[  76/320] loss 0.7438 lr 7.84e-04 | 1.4s
+[  77/320] loss 0.7251 lr 7.81e-04 | 1.4s
+[  78/320] loss 0.7183 lr 7.78e-04 | 1.4s
+[  79/320] loss 0.7244 lr 7.75e-04 | 1.4s
+[  80/320] loss 0.6940 lr 7.72e-04 | 1.4s | val mIoU 49.31 (best 49.31)
+[  81/320] loss 0.6673 lr 7.69e-04 | 1.4s
+[  82/320] loss 0.6820 lr 7.66e-04 | 1.4s
+[  83/320] loss 0.6837 lr 7.63e-04 | 1.4s
+[  84/320] loss 0.6438 lr 7.61e-04 | 1.4s
+[  85/320] loss 0.6501 lr 7.58e-04 | 1.4s | val mIoU 47.85 (best 49.31)
+[  86/320] loss 0.6616 lr 7.55e-04 | 1.4s
+[  87/320] loss 0.6834 lr 7.52e-04 | 1.4s
+[  88/320] loss 0.6739 lr 7.49e-04 | 1.4s
+[  89/320] loss 0.6193 lr 7.46e-04 | 1.4s
+[  90/320] loss 0.6076 lr 7.43e-04 | 1.4s | val mIoU 43.15 (best 49.31)
+[  91/320] loss 0.6311 lr 7.40e-04 | 1.4s
+[  92/320] loss 0.6628 lr 7.37e-04 | 1.4s
+[  93/320] loss 0.6467 lr 7.34e-04 | 1.4s
+[  94/320] loss 0.6332 lr 7.32e-04 | 1.4s
+[  95/320] loss 0.6433 lr 7.29e-04 | 1.4s | val mIoU 48.96 (best 49.31)
+[  96/320] loss 0.6209 lr 7.26e-04 | 1.4s
+[  97/320] loss 0.6145 lr 7.23e-04 | 1.4s
+[  98/320] loss 0.6564 lr 7.20e-04 | 1.4s
+[  99/320] loss 0.5793 lr 7.17e-04 | 1.4s
+[ 100/320] loss 0.6023 lr 7.14e-04 | 1.4s | val mIoU 48.60 (best 49.31)
+[ 101/320] loss 0.5889 lr 7.11e-04 | 1.4s
+[ 102/320] loss 0.5679 lr 7.08e-04 | 1.4s
+[ 103/320] loss 0.5656 lr 7.05e-04 | 1.4s
+[ 104/320] loss 0.5741 lr 7.02e-04 | 1.4s
+[ 105/320] loss 0.5649 lr 6.99e-04 | 1.4s | val mIoU 46.95 (best 49.31)
+[ 106/320] loss 0.6058 lr 6.96e-04 | 1.4s
+[ 107/320] loss 0.6026 lr 6.94e-04 | 1.4s
+[ 108/320] loss 0.5947 lr 6.91e-04 | 1.4s
+[ 109/320] loss 0.6146 lr 6.88e-04 | 1.4s
+[ 110/320] loss 0.5615 lr 6.85e-04 | 1.4s | val mIoU 50.21 (best 50.21)
+[ 111/320] loss 0.5739 lr 6.82e-04 | 1.4s
+[ 112/320] loss 0.5933 lr 6.79e-04 | 1.4s
+[ 113/320] loss 0.5667 lr 6.76e-04 | 1.4s
+[ 114/320] loss 0.5621 lr 6.73e-04 | 1.4s
+[ 115/320] loss 0.5539 lr 6.70e-04 | 1.4s | val mIoU 49.70 (best 50.21)
+[ 116/320] loss 0.5520 lr 6.67e-04 | 1.4s
+[ 117/320] loss 0.5468 lr 6.64e-04 | 1.4s
+[ 118/320] loss 0.5596 lr 6.61e-04 | 1.4s
+[ 119/320] loss 0.5765 lr 6.58e-04 | 1.4s
+[ 120/320] loss 0.5345 lr 6.55e-04 | 1.4s | val mIoU 52.46 (best 52.46)
+[ 121/320] loss 0.5826 lr 6.52e-04 | 1.4s
+[ 122/320] loss 0.5175 lr 6.49e-04 | 1.4s
+[ 123/320] loss 0.5123 lr 6.46e-04 | 1.4s
+[ 124/320] loss 0.5368 lr 6.44e-04 | 1.4s
+[ 125/320] loss 0.5090 lr 6.41e-04 | 1.4s | val mIoU 57.87 (best 57.87)
+[ 126/320] loss 0.5146 lr 6.38e-04 | 1.4s
+[ 127/320] loss 0.5109 lr 6.35e-04 | 1.4s
+[ 128/320] loss 0.5457 lr 6.32e-04 | 1.4s
+[ 129/320] loss 0.5316 lr 6.29e-04 | 1.4s
+[ 130/320] loss 0.5168 lr 6.26e-04 | 1.4s | val mIoU 51.64 (best 57.87)
+[ 131/320] loss 0.5055 lr 6.23e-04 | 1.4s
+[ 132/320] loss 0.4969 lr 6.20e-04 | 1.4s
+[ 133/320] loss 0.4890 lr 6.17e-04 | 1.4s
+[ 134/320] loss 0.4986 lr 6.14e-04 | 1.4s
+[ 135/320] loss 0.5190 lr 6.11e-04 | 1.4s | val mIoU 55.16 (best 57.87)
+[ 136/320] loss 0.5409 lr 6.08e-04 | 1.4s
+[ 137/320] loss 0.5146 lr 6.05e-04 | 1.4s
+[ 138/320] loss 0.4808 lr 6.02e-04 | 1.4s
+[ 139/320] loss 0.4687 lr 5.99e-04 | 1.4s
+[ 140/320] loss 0.4676 lr 5.96e-04 | 1.4s | val mIoU 54.15 (best 57.87)
+[ 141/320] loss 0.4694 lr 5.93e-04 | 1.4s
+[ 142/320] loss 0.4786 lr 5.90e-04 | 1.4s
+[ 143/320] loss 0.4921 lr 5.87e-04 | 1.4s
+[ 144/320] loss 0.4790 lr 5.84e-04 | 1.4s
+[ 145/320] loss 0.4921 lr 5.81e-04 | 1.4s | val mIoU 56.59 (best 57.87)
+[ 146/320] loss 0.4470 lr 5.78e-04 | 1.4s
+[ 147/320] loss 0.4330 lr 5.75e-04 | 1.4s
+[ 148/320] loss 0.4340 lr 5.72e-04 | 1.4s
+[ 149/320] loss 0.4511 lr 5.69e-04 | 1.4s
+[ 150/320] loss 0.4700 lr 5.66e-04 | 1.4s | val mIoU 53.38 (best 57.87)
+[ 151/320] loss 0.4526 lr 5.63e-04 | 1.4s
+[ 152/320] loss 0.4719 lr 5.60e-04 | 1.4s
+[ 153/320] loss 0.4396 lr 5.57e-04 | 1.4s
+[ 154/320] loss 0.4304 lr 5.54e-04 | 1.4s
+[ 155/320] loss 0.4303 lr 5.51e-04 | 1.4s | val mIoU 57.43 (best 57.87)
+[ 156/320] loss 0.4562 lr 5.48e-04 | 1.4s
+[ 157/320] loss 0.4509 lr 5.45e-04 | 1.4s
+[ 158/320] loss 0.4681 lr 5.42e-04 | 1.4s
+[ 159/320] loss 0.4591 lr 5.39e-04 | 1.4s
+[ 160/320] loss 0.4690 lr 5.36e-04 | 1.4s | val mIoU 55.54 (best 57.87)
+[ 161/320] loss 0.4501 lr 5.33e-04 | 1.4s
+[ 162/320] loss 0.4197 lr 5.30e-04 | 1.4s
+[ 163/320] loss 0.4220 lr 5.27e-04 | 1.4s
+[ 164/320] loss 0.4436 lr 5.24e-04 | 1.4s
+[ 165/320] loss 0.4187 lr 5.21e-04 | 1.4s | val mIoU 55.07 (best 57.87)
+[ 166/320] loss 0.4309 lr 5.18e-04 | 1.4s
+[ 167/320] loss 0.4450 lr 5.15e-04 | 1.4s
+[ 168/320] loss 0.4536 lr 5.12e-04 | 1.4s
+[ 169/320] loss 0.4062 lr 5.09e-04 | 1.4s
+[ 170/320] loss 0.4165 lr 5.06e-04 | 1.4s | val mIoU 53.63 (best 57.87)
+[ 171/320] loss 0.3987 lr 5.03e-04 | 1.4s
+[ 172/320] loss 0.3940 lr 5.00e-04 | 1.4s
+[ 173/320] loss 0.3897 lr 4.97e-04 | 1.4s
+[ 174/320] loss 0.3943 lr 4.94e-04 | 1.4s
+[ 175/320] loss 0.4088 lr 4.91e-04 | 1.4s | val mIoU 56.35 (best 57.87)
+[ 176/320] loss 0.3687 lr 4.88e-04 | 1.4s
+[ 177/320] loss 0.3852 lr 4.85e-04 | 1.4s
+[ 178/320] loss 0.4115 lr 4.82e-04 | 1.4s
+[ 179/320] loss 0.4354 lr 4.79e-04 | 1.4s
+[ 180/320] loss 0.4119 lr 4.75e-04 | 1.4s | val mIoU 58.33 (best 58.33)
+[ 181/320] loss 0.3835 lr 4.72e-04 | 1.4s
+[ 182/320] loss 0.4406 lr 4.69e-04 | 1.4s
+[ 183/320] loss 0.4015 lr 4.66e-04 | 1.4s
+[ 184/320] loss 0.3797 lr 4.63e-04 | 1.4s
+[ 185/320] loss 0.4150 lr 4.60e-04 | 1.4s | val mIoU 55.80 (best 58.33)
+[ 186/320] loss 0.3824 lr 4.57e-04 | 1.4s
+[ 187/320] loss 0.4173 lr 4.54e-04 | 1.4s
+[ 188/320] loss 0.3759 lr 4.51e-04 | 1.4s
+[ 189/320] loss 0.3787 lr 4.48e-04 | 1.4s
+[ 190/320] loss 0.3948 lr 4.45e-04 | 1.4s | val mIoU 58.17 (best 58.33)
+[ 191/320] loss 0.3731 lr 4.42e-04 | 1.4s
+[ 192/320] loss 0.4178 lr 4.39e-04 | 1.4s
+[ 193/320] loss 0.4156 lr 4.36e-04 | 1.4s
+[ 194/320] loss 0.3651 lr 4.32e-04 | 1.4s
+[ 195/320] loss 0.3741 lr 4.29e-04 | 1.4s | val mIoU 58.09 (best 58.33)
+[ 196/320] loss 0.3398 lr 4.26e-04 | 1.4s
+[ 197/320] loss 0.3781 lr 4.23e-04 | 1.4s
+[ 198/320] loss 0.3679 lr 4.20e-04 | 1.4s
+[ 199/320] loss 0.3573 lr 4.17e-04 | 1.4s
+[ 200/320] loss 0.3794 lr 4.14e-04 | 1.4s | val mIoU 59.47 (best 59.47)
+[ 201/320] loss 0.3790 lr 4.11e-04 | 1.4s
+[ 202/320] loss 0.3699 lr 4.08e-04 | 1.4s
+[ 203/320] loss 0.3550 lr 4.05e-04 | 1.4s
+[ 204/320] loss 0.3734 lr 4.01e-04 | 1.4s
+[ 205/320] loss 0.3822 lr 3.98e-04 | 1.4s | val mIoU 58.24 (best 59.47)
+[ 206/320] loss 0.3611 lr 3.95e-04 | 1.4s
+[ 207/320] loss 0.3306 lr 3.92e-04 | 1.4s
+[ 208/320] loss 0.3600 lr 3.89e-04 | 1.4s
+[ 209/320] loss 0.3777 lr 3.86e-04 | 1.4s
+[ 210/320] loss 0.3832 lr 3.83e-04 | 1.4s | val mIoU 57.98 (best 59.47)
+[ 211/320] loss 0.3656 lr 3.80e-04 | 1.4s
+[ 212/320] loss 0.3631 lr 3.77e-04 | 1.4s
+[ 213/320] loss 0.3463 lr 3.73e-04 | 1.4s
+[ 214/320] loss 0.3615 lr 3.70e-04 | 1.4s
+[ 215/320] loss 0.3571 lr 3.67e-04 | 1.4s | val mIoU 59.74 (best 59.74)
+[ 216/320] loss 0.3389 lr 3.64e-04 | 1.4s
+[ 217/320] loss 0.3282 lr 3.61e-04 | 1.4s
+[ 218/320] loss 0.3302 lr 3.58e-04 | 1.4s
+[ 219/320] loss 0.3585 lr 3.54e-04 | 1.4s
+[ 220/320] loss 0.3431 lr 3.51e-04 | 1.4s | val mIoU 59.07 (best 59.74)
+[ 221/320] loss 0.3774 lr 3.48e-04 | 1.4s
+[ 222/320] loss 0.3680 lr 3.45e-04 | 1.4s
+[ 223/320] loss 0.3681 lr 3.42e-04 | 1.4s
+[ 224/320] loss 0.3650 lr 3.39e-04 | 1.4s
+[ 225/320] loss 0.3492 lr 3.35e-04 | 1.4s | val mIoU 59.48 (best 59.74)
+[ 226/320] loss 0.3571 lr 3.32e-04 | 1.4s
+[ 227/320] loss 0.3344 lr 3.29e-04 | 1.4s
+[ 228/320] loss 0.3312 lr 3.26e-04 | 1.4s
+[ 229/320] loss 0.3200 lr 3.23e-04 | 1.4s
+[ 230/320] loss 0.3070 lr 3.20e-04 | 1.4s | val mIoU 59.45 (best 59.74)
+[ 231/320] loss 0.3352 lr 3.16e-04 | 1.4s
+[ 232/320] loss 0.3200 lr 3.13e-04 | 1.4s
+[ 233/320] loss 0.3363 lr 3.10e-04 | 1.4s
+[ 234/320] loss 0.3477 lr 3.07e-04 | 1.4s
+[ 235/320] loss 0.3266 lr 3.04e-04 | 1.4s | val mIoU 61.38 (best 61.38)
+[ 236/320] loss 0.3155 lr 3.00e-04 | 1.4s
+[ 237/320] loss 0.3402 lr 2.97e-04 | 1.4s
+[ 238/320] loss 0.3080 lr 2.94e-04 | 1.4s
+[ 239/320] loss 0.3103 lr 2.91e-04 | 1.4s
+[ 240/320] loss 0.3147 lr 2.87e-04 | 1.4s | val mIoU 59.65 (best 61.38)
+[ 241/320] loss 0.3222 lr 2.84e-04 | 1.4s
+[ 242/320] loss 0.3029 lr 2.81e-04 | 1.4s
+[ 243/320] loss 0.3384 lr 2.78e-04 | 1.4s
+[ 244/320] loss 0.3373 lr 2.75e-04 | 1.4s
+[ 245/320] loss 0.3152 lr 2.71e-04 | 1.4s | val mIoU 60.92 (best 61.38)
+[ 246/320] loss 0.2983 lr 2.68e-04 | 1.4s
+[ 247/320] loss 0.3116 lr 2.65e-04 | 1.4s
+[ 248/320] loss 0.3012 lr 2.61e-04 | 1.4s
+[ 249/320] loss 0.3128 lr 2.58e-04 | 1.4s
+[ 250/320] loss 0.3313 lr 2.55e-04 | 1.4s | val mIoU 60.51 (best 61.38)
+[ 251/320] loss 0.3161 lr 2.52e-04 | 1.4s
+[ 252/320] loss 0.3000 lr 2.48e-04 | 1.4s
+[ 253/320] loss 0.2939 lr 2.45e-04 | 1.4s
+[ 254/320] loss 0.2965 lr 2.42e-04 | 1.4s
+[ 255/320] loss 0.2916 lr 2.39e-04 | 1.4s | val mIoU 59.50 (best 61.38)
+[ 256/320] loss 0.3311 lr 2.35e-04 | 1.4s
+[ 257/320] loss 0.3036 lr 2.32e-04 | 1.4s
+[ 258/320] loss 0.2877 lr 2.29e-04 | 1.4s
+[ 259/320] loss 0.3088 lr 2.25e-04 | 1.4s
+[ 260/320] loss 0.3031 lr 2.22e-04 | 1.4s | val mIoU 60.55 (best 61.38)
+[ 261/320] loss 0.2850 lr 2.19e-04 | 1.4s
+[ 262/320] loss 0.2985 lr 2.15e-04 | 1.4s
+[ 263/320] loss 0.3037 lr 2.12e-04 | 1.4s
+[ 264/320] loss 0.3085 lr 2.09e-04 | 1.4s
+[ 265/320] loss 0.2835 lr 2.05e-04 | 1.4s | val mIoU 61.65 (best 61.65)
+[ 266/320] loss 0.3047 lr 2.02e-04 | 1.4s
+[ 267/320] loss 0.2847 lr 1.99e-04 | 1.4s
+[ 268/320] loss 0.2923 lr 1.95e-04 | 1.4s
+[ 269/320] loss 0.2880 lr 1.92e-04 | 1.4s
+[ 270/320] loss 0.2675 lr 1.88e-04 | 1.4s | val mIoU 61.12 (best 61.65)
+[ 271/320] loss 0.2860 lr 1.85e-04 | 1.4s
+[ 272/320] loss 0.2723 lr 1.82e-04 | 1.4s
+[ 273/320] loss 0.2730 lr 1.78e-04 | 1.4s
+[ 274/320] loss 0.2718 lr 1.75e-04 | 1.4s
+[ 275/320] loss 0.2736 lr 1.71e-04 | 1.4s | val mIoU 59.49 (best 61.65)
+[ 276/320] loss 0.2659 lr 1.68e-04 | 1.4s
+[ 277/320] loss 0.2726 lr 1.65e-04 | 1.4s
+[ 278/320] loss 0.2750 lr 1.61e-04 | 1.4s
+[ 279/320] loss 0.2641 lr 1.58e-04 | 1.4s
+[ 280/320] loss 0.2739 lr 1.54e-04 | 1.4s | val mIoU 61.22 (best 61.65)
+[ 281/320] loss 0.2570 lr 1.51e-04 | 1.4s
+[ 282/320] loss 0.2674 lr 1.47e-04 | 1.4s
+[ 283/320] loss 0.2653 lr 1.44e-04 | 1.4s
+[ 284/320] loss 0.2730 lr 1.40e-04 | 1.4s
+[ 285/320] loss 0.2796 lr 1.37e-04 | 1.4s | val mIoU 63.81 (best 63.81)
+[ 286/320] loss 0.2786 lr 1.33e-04 | 1.4s
+[ 287/320] loss 0.2696 lr 1.30e-04 | 1.4s
+[ 288/320] loss 0.2578 lr 1.26e-04 | 1.4s
+[ 289/320] loss 0.2783 lr 1.23e-04 | 1.4s
+[ 290/320] loss 0.2598 lr 1.19e-04 | 1.4s | val mIoU 63.59 (best 63.81)
+[ 291/320] loss 0.2668 lr 1.16e-04 | 1.4s
+[ 292/320] loss 0.2642 lr 1.12e-04 | 1.4s
+[ 293/320] loss 0.2712 lr 1.08e-04 | 1.4s
+[ 294/320] loss 0.2945 lr 1.05e-04 | 1.4s
+[ 295/320] loss 0.2806 lr 1.01e-04 | 1.4s | val mIoU 60.10 (best 63.81)
+[ 296/320] loss 0.2688 lr 9.75e-05 | 1.4s
+[ 297/320] loss 0.2681 lr 9.39e-05 | 1.4s
+[ 298/320] loss 0.2647 lr 9.02e-05 | 1.4s
+[ 299/320] loss 0.2547 lr 8.65e-05 | 1.4s
+[ 300/320] loss 0.2463 lr 8.28e-05 | 1.4s | val mIoU 61.80 (best 63.81)
+[ 301/320] loss 0.2565 lr 7.91e-05 | 1.4s
+[ 302/320] loss 0.2558 lr 7.53e-05 | 1.4s
+[ 303/320] loss 0.2552 lr 7.16e-05 | 1.4s
+[ 304/320] loss 0.2499 lr 6.78e-05 | 1.4s
+[ 305/320] loss 0.2543 lr 6.40e-05 | 1.4s | val mIoU 61.75 (best 63.81)
+[ 306/320] loss 0.2626 lr 6.02e-05 | 1.4s
+[ 307/320] loss 0.2565 lr 5.63e-05 | 1.4s
+[ 308/320] loss 0.2449 lr 5.24e-05 | 1.4s
+[ 309/320] loss 0.2676 lr 4.85e-05 | 1.4s
+[ 310/320] loss 0.2536 lr 4.46e-05 | 1.4s | val mIoU 61.78 (best 63.81)
+[ 311/320] loss 0.2419 lr 4.06e-05 | 1.4s
+[ 312/320] loss 0.2536 lr 3.65e-05 | 1.4s
+[ 313/320] loss 0.2405 lr 3.24e-05 | 1.4s
+[ 314/320] loss 0.2626 lr 2.83e-05 | 1.4s
+[ 315/320] loss 0.2520 lr 2.41e-05 | 1.4s | val mIoU 61.93 (best 63.81)
+[ 316/320] loss 0.2535 lr 1.98e-05 | 1.4s
+[ 317/320] loss 0.2432 lr 1.54e-05 | 1.4s
+[ 318/320] loss 0.2496 lr 1.08e-05 | 1.4s
+[ 319/320] loss 0.2417 lr 6.02e-06 | 1.4s
+[ 320/320] loss 0.2424 lr 6.43e-07 | 1.4s | val mIoU 62.11 (best 63.81)
+==> TEST (best val checkpoint, epoch 285): mIoU 52.71 | pixel acc 84.53
+    0.754M params | 9.57 GMACs | FPS eager 141.6, CUDA graph 164.4 | trained in 10.1 min | peak 2.52 GB
+[16:27:12] done unet_pm_frac0.25 in 11.1 min
+[16:27:12] train lmiinet_frac0.5: train.py --model lmiinet --epochs 160 --seed 42 --workers 2 --train-fraction 0.5
+==> run 'lmiinet_frac0.5' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet_frac0.5
+    train 184 images (fraction 0.5), val 101, data on GPU
+    lmiinet: 727,073 params | precision bf16 | step mode eager
+[   1/160] loss 3.3382 lr 9.95e-04 | 143.1s
+[   2/160] loss 2.0676 lr 9.89e-04 | 8.6s
+[   3/160] loss 1.7085 lr 9.83e-04 | 8.4s
+[   4/160] loss 1.5694 lr 9.78e-04 | 8.3s
+[   5/160] loss 1.4085 lr 9.72e-04 | 8.6s | val mIoU 43.21 (best 43.21)
+[   6/160] loss 1.3138 lr 9.66e-04 | 8.6s
+[   7/160] loss 1.3104 lr 9.61e-04 | 8.3s
+[   8/160] loss 1.2320 lr 9.55e-04 | 8.3s
+[   9/160] loss 1.2117 lr 9.49e-04 | 8.3s
+[  10/160] loss 1.1537 lr 9.44e-04 | 8.4s | val mIoU 45.54 (best 45.54)
+[  11/160] loss 1.1409 lr 9.38e-04 | 8.4s
+[  12/160] loss 1.1270 lr 9.32e-04 | 8.3s
+[  13/160] loss 1.0479 lr 9.27e-04 | 8.3s
+[  14/160] loss 0.9948 lr 9.21e-04 | 8.3s
+[  15/160] loss 0.9946 lr 9.15e-04 | 8.5s | val mIoU 49.41 (best 49.41)
+[  16/160] loss 0.9838 lr 9.10e-04 | 8.4s
+[  17/160] loss 0.9148 lr 9.04e-04 | 8.4s
+[  18/160] loss 0.9111 lr 8.98e-04 | 8.5s
+[  19/160] loss 0.9029 lr 8.93e-04 | 8.6s
+[  20/160] loss 0.9051 lr 8.87e-04 | 8.4s | val mIoU 47.74 (best 49.41)
+[  21/160] loss 0.9501 lr 8.81e-04 | 8.4s
+[  22/160] loss 0.8516 lr 8.76e-04 | 8.5s
+[  23/160] loss 0.8166 lr 8.70e-04 | 8.4s
+[  24/160] loss 0.8128 lr 8.64e-04 | 8.5s
+[  25/160] loss 0.7646 lr 8.58e-04 | 8.5s | val mIoU 55.51 (best 55.51)
+[  26/160] loss 0.7669 lr 8.53e-04 | 8.5s
+[  27/160] loss 0.7746 lr 8.47e-04 | 8.6s
+[  28/160] loss 0.7839 lr 8.41e-04 | 8.6s
+[  29/160] loss 0.7240 lr 8.36e-04 | 8.5s
+[  30/160] loss 0.7644 lr 8.30e-04 | 8.5s | val mIoU 54.03 (best 55.51)
+[  31/160] loss 0.7461 lr 8.24e-04 | 8.5s
+[  32/160] loss 0.7181 lr 8.18e-04 | 8.5s
+[  33/160] loss 0.6888 lr 8.13e-04 | 8.5s
+[  34/160] loss 0.6776 lr 8.07e-04 | 8.5s
+[  35/160] loss 0.6532 lr 8.01e-04 | 8.5s | val mIoU 60.19 (best 60.19)
+[  36/160] loss 0.6742 lr 7.95e-04 | 8.6s
+[  37/160] loss 0.6988 lr 7.89e-04 | 8.8s
+[  38/160] loss 0.6639 lr 7.84e-04 | 8.6s
+[  39/160] loss 0.6391 lr 7.78e-04 | 8.5s
+[  40/160] loss 0.6555 lr 7.72e-04 | 8.5s | val mIoU 58.82 (best 60.19)
+[  41/160] loss 0.6322 lr 7.66e-04 | 8.5s
+[  42/160] loss 0.6203 lr 7.61e-04 | 8.6s
+[  43/160] loss 0.6304 lr 7.55e-04 | 8.6s
+[  44/160] loss 0.6661 lr 7.49e-04 | 8.5s
+[  45/160] loss 0.6372 lr 7.43e-04 | 8.6s | val mIoU 56.78 (best 60.19)
+[  46/160] loss 0.6048 lr 7.37e-04 | 8.5s
+[  47/160] loss 0.5841 lr 7.31e-04 | 8.6s
+[  48/160] loss 0.5628 lr 7.26e-04 | 8.6s
+[  49/160] loss 0.5616 lr 7.20e-04 | 8.7s
+[  50/160] loss 0.5659 lr 7.14e-04 | 8.6s | val mIoU 55.61 (best 60.19)
+[  51/160] loss 0.5387 lr 7.08e-04 | 8.5s
+[  52/160] loss 0.5718 lr 7.02e-04 | 8.6s
+[  53/160] loss 0.5596 lr 6.96e-04 | 8.5s
+[  54/160] loss 0.5471 lr 6.91e-04 | 8.6s
+[  55/160] loss 0.5649 lr 6.85e-04 | 8.7s | val mIoU 57.45 (best 60.19)
+[  56/160] loss 0.5265 lr 6.79e-04 | 8.5s
+[  57/160] loss 0.5339 lr 6.73e-04 | 8.5s
+[  58/160] loss 0.5153 lr 6.67e-04 | 8.6s
+[  59/160] loss 0.5173 lr 6.61e-04 | 8.5s
+[  60/160] loss 0.5011 lr 6.55e-04 | 8.5s | val mIoU 61.96 (best 61.96)
+[  61/160] loss 0.5020 lr 6.49e-04 | 8.5s
+[  62/160] loss 0.4923 lr 6.44e-04 | 8.5s
+[  63/160] loss 0.5058 lr 6.38e-04 | 8.6s
+[  64/160] loss 0.4829 lr 6.32e-04 | 8.6s
+[  65/160] loss 0.4814 lr 6.26e-04 | 8.5s | val mIoU 60.41 (best 61.96)
+[  66/160] loss 0.4952 lr 6.20e-04 | 8.5s
+[  67/160] loss 0.4926 lr 6.14e-04 | 8.6s
+[  68/160] loss 0.5018 lr 6.08e-04 | 8.6s
+[  69/160] loss 0.4826 lr 6.02e-04 | 8.5s
+[  70/160] loss 0.4854 lr 5.96e-04 | 8.6s | val mIoU 63.17 (best 63.17)
+[  71/160] loss 0.4829 lr 5.90e-04 | 8.6s
+[  72/160] loss 0.5027 lr 5.84e-04 | 8.5s
+[  73/160] loss 0.4943 lr 5.78e-04 | 8.7s
+[  74/160] loss 0.4792 lr 5.72e-04 | 8.6s
+[  75/160] loss 0.4634 lr 5.66e-04 | 8.6s | val mIoU 57.94 (best 63.17)
+[  76/160] loss 0.4637 lr 5.60e-04 | 8.6s
+[  77/160] loss 0.4770 lr 5.54e-04 | 8.6s
+[  78/160] loss 0.4698 lr 5.48e-04 | 8.5s
+[  79/160] loss 0.4609 lr 5.42e-04 | 8.6s
+[  80/160] loss 0.4505 lr 5.36e-04 | 8.6s | val mIoU 60.98 (best 63.17)
+[  81/160] loss 0.4430 lr 5.30e-04 | 8.5s
+[  82/160] loss 0.4394 lr 5.24e-04 | 8.6s
+[  83/160] loss 0.4275 lr 5.18e-04 | 8.6s
+[  84/160] loss 0.4219 lr 5.12e-04 | 8.6s
+[  85/160] loss 0.4236 lr 5.06e-04 | 8.6s | val mIoU 64.15 (best 64.15)
+[  86/160] loss 0.4198 lr 5.00e-04 | 8.7s
+[  87/160] loss 0.4128 lr 4.94e-04 | 8.9s
+[  88/160] loss 0.4160 lr 4.88e-04 | 8.8s
+[  89/160] loss 0.4156 lr 4.82e-04 | 8.7s
+[  90/160] loss 0.4216 lr 4.75e-04 | 8.8s | val mIoU 65.36 (best 65.36)
+[  91/160] loss 0.4134 lr 4.69e-04 | 8.8s
+[  92/160] loss 0.4326 lr 4.63e-04 | 8.8s
+[  93/160] loss 0.4226 lr 4.57e-04 | 9.0s
+[  94/160] loss 0.4023 lr 4.51e-04 | 8.8s
+[  95/160] loss 0.4053 lr 4.45e-04 | 8.7s | val mIoU 65.03 (best 65.36)
+[  96/160] loss 0.3895 lr 4.39e-04 | 8.8s
+[  97/160] loss 0.3792 lr 4.32e-04 | 8.7s
+[  98/160] loss 0.3935 lr 4.26e-04 | 8.8s
+[  99/160] loss 0.3936 lr 4.20e-04 | 8.8s
+[ 100/160] loss 0.3958 lr 4.14e-04 | 8.8s | val mIoU 63.45 (best 65.36)
+[ 101/160] loss 0.3887 lr 4.08e-04 | 8.8s
+[ 102/160] loss 0.3992 lr 4.01e-04 | 8.9s
+[ 103/160] loss 0.3992 lr 3.95e-04 | 8.8s
+[ 104/160] loss 0.3922 lr 3.89e-04 | 8.9s
+[ 105/160] loss 0.3937 lr 3.83e-04 | 8.9s | val mIoU 66.47 (best 66.47)
+[ 106/160] loss 0.4112 lr 3.76e-04 | 8.7s
+[ 107/160] loss 0.3964 lr 3.70e-04 | 8.5s
+[ 108/160] loss 0.3731 lr 3.64e-04 | 8.8s
+[ 109/160] loss 0.3820 lr 3.58e-04 | 8.7s
+[ 110/160] loss 0.3674 lr 3.51e-04 | 8.6s | val mIoU 64.14 (best 66.47)
+[ 111/160] loss 0.3855 lr 3.45e-04 | 8.7s
+[ 112/160] loss 0.3930 lr 3.39e-04 | 8.7s
+[ 113/160] loss 0.3833 lr 3.32e-04 | 8.6s
+[ 114/160] loss 0.3693 lr 3.26e-04 | 8.7s
+[ 115/160] loss 0.3695 lr 3.20e-04 | 8.6s | val mIoU 64.97 (best 66.47)
+[ 116/160] loss 0.3593 lr 3.13e-04 | 8.7s
+[ 117/160] loss 0.3644 lr 3.07e-04 | 8.8s
+[ 118/160] loss 0.3584 lr 3.00e-04 | 8.6s
+[ 119/160] loss 0.3515 lr 2.94e-04 | 8.6s
+[ 120/160] loss 0.3733 lr 2.87e-04 | 8.9s | val mIoU 65.40 (best 66.47)
+[ 121/160] loss 0.3576 lr 2.81e-04 | 8.7s
+[ 122/160] loss 0.3527 lr 2.75e-04 | 8.6s
+[ 123/160] loss 0.3461 lr 2.68e-04 | 8.7s
+[ 124/160] loss 0.3483 lr 2.61e-04 | 8.6s
+[ 125/160] loss 0.3298 lr 2.55e-04 | 8.7s | val mIoU 65.97 (best 66.47)
+[ 126/160] loss 0.3353 lr 2.48e-04 | 8.6s
+[ 127/160] loss 0.3463 lr 2.42e-04 | 8.6s
+[ 128/160] loss 0.3433 lr 2.35e-04 | 8.6s
+[ 129/160] loss 0.3368 lr 2.29e-04 | 8.6s
+[ 130/160] loss 0.3329 lr 2.22e-04 | 8.7s | val mIoU 66.67 (best 66.67)
+[ 131/160] loss 0.3445 lr 2.15e-04 | 8.7s
+[ 132/160] loss 0.3357 lr 2.09e-04 | 8.6s
+[ 133/160] loss 0.3384 lr 2.02e-04 | 8.7s
+[ 134/160] loss 0.3309 lr 1.95e-04 | 8.7s
+[ 135/160] loss 0.3344 lr 1.88e-04 | 8.7s | val mIoU 66.64 (best 66.67)
+[ 136/160] loss 0.3381 lr 1.82e-04 | 8.6s
+[ 137/160] loss 0.3333 lr 1.75e-04 | 8.7s
+[ 138/160] loss 0.3378 lr 1.68e-04 | 8.8s
+[ 139/160] loss 0.3296 lr 1.61e-04 | 8.6s
+[ 140/160] loss 0.3275 lr 1.54e-04 | 8.7s | val mIoU 67.41 (best 67.41)
+[ 141/160] loss 0.3322 lr 1.47e-04 | 8.7s
+[ 142/160] loss 0.3475 lr 1.40e-04 | 8.7s
+[ 143/160] loss 0.3356 lr 1.33e-04 | 8.7s
+[ 144/160] loss 0.3234 lr 1.26e-04 | 8.7s
+[ 145/160] loss 0.3291 lr 1.19e-04 | 8.5s | val mIoU 66.73 (best 67.41)
+[ 146/160] loss 0.3229 lr 1.12e-04 | 8.8s
+[ 147/160] loss 0.3175 lr 1.05e-04 | 8.7s
+[ 148/160] loss 0.3244 lr 9.75e-05 | 8.7s
+[ 149/160] loss 0.3180 lr 9.02e-05 | 8.6s
+[ 150/160] loss 0.3135 lr 8.28e-05 | 8.6s | val mIoU 67.81 (best 67.81)
+[ 151/160] loss 0.3224 lr 7.53e-05 | 8.9s
+[ 152/160] loss 0.3175 lr 6.78e-05 | 9.1s
+[ 153/160] loss 0.3109 lr 6.02e-05 | 9.0s
+[ 154/160] loss 0.3144 lr 5.24e-05 | 8.9s
+[ 155/160] loss 0.3112 lr 4.45e-05 | 9.9s | val mIoU 67.48 (best 67.81)
+[ 156/160] loss 0.3203 lr 3.65e-05 | 9.1s
+[ 157/160] loss 0.3144 lr 2.83e-05 | 9.2s
+[ 158/160] loss 0.3137 lr 1.98e-05 | 9.3s
+[ 159/160] loss 0.3050 lr 1.08e-05 | 9.3s
+[ 160/160] loss 0.3178 lr 6.18e-07 | 9.3s | val mIoU 67.37 (best 67.81)
+==> TEST (best val checkpoint, epoch 150): mIoU 52.87 | pixel acc 84.40
+    0.727M params | 4.99 GMACs | FPS eager 12.4, CUDA graph 75.1 | trained in 28.4 min | peak 4.14 GB
+[16:58:07] done lmiinet_frac0.5 in 30.9 min
+[16:58:07] train unet_pm_frac0.5: train.py --model unet_pm --epochs 160 --seed 42 --workers 2 --train-fraction 0.5
+==> run 'unet_pm_frac0.5' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\unet_pm_frac0.5
+    train 184 images (fraction 0.5), val 101, data on GPU
+    unet_pm: 753,871 params | precision bf16 | step mode eager
+[   1/160] loss 2.4953 lr 9.95e-04 | 67.8s
+[   2/160] loss 1.9753 lr 9.89e-04 | 2.8s
+[   3/160] loss 1.7912 lr 9.83e-04 | 2.8s
+[   4/160] loss 1.6961 lr 9.78e-04 | 2.8s
+[   5/160] loss 1.5617 lr 9.72e-04 | 2.8s | val mIoU 24.47 (best 24.47)
+[   6/160] loss 1.4427 lr 9.66e-04 | 2.8s
+[   7/160] loss 1.3931 lr 9.61e-04 | 2.8s
+[   8/160] loss 1.3750 lr 9.55e-04 | 2.8s
+[   9/160] loss 1.3225 lr 9.49e-04 | 2.8s
+[  10/160] loss 1.2287 lr 9.44e-04 | 2.8s | val mIoU 29.06 (best 29.06)
+[  11/160] loss 1.2127 lr 9.38e-04 | 2.8s
+[  12/160] loss 1.1792 lr 9.32e-04 | 2.8s
+[  13/160] loss 1.1372 lr 9.27e-04 | 2.8s
+[  14/160] loss 1.1115 lr 9.21e-04 | 2.8s
+[  15/160] loss 1.0469 lr 9.15e-04 | 2.8s | val mIoU 35.68 (best 35.68)
+[  16/160] loss 1.0517 lr 9.10e-04 | 2.8s
+[  17/160] loss 1.0399 lr 9.04e-04 | 2.8s
+[  18/160] loss 1.0029 lr 8.98e-04 | 2.8s
+[  19/160] loss 0.9702 lr 8.93e-04 | 2.8s
+[  20/160] loss 1.0219 lr 8.87e-04 | 2.8s | val mIoU 36.03 (best 36.03)
+[  21/160] loss 1.0127 lr 8.81e-04 | 2.8s
+[  22/160] loss 0.9341 lr 8.76e-04 | 2.8s
+[  23/160] loss 0.9408 lr 8.70e-04 | 2.8s
+[  24/160] loss 0.9478 lr 8.64e-04 | 2.8s
+[  25/160] loss 0.8584 lr 8.58e-04 | 2.8s | val mIoU 38.76 (best 38.76)
+[  26/160] loss 0.8750 lr 8.53e-04 | 2.8s
+[  27/160] loss 0.9070 lr 8.47e-04 | 2.9s
+[  28/160] loss 0.8771 lr 8.41e-04 | 2.8s
+[  29/160] loss 0.8587 lr 8.36e-04 | 2.9s
+[  30/160] loss 0.8264 lr 8.30e-04 | 2.9s | val mIoU 43.36 (best 43.36)
+[  31/160] loss 0.8110 lr 8.24e-04 | 2.9s
+[  32/160] loss 0.8043 lr 8.18e-04 | 2.9s
+[  33/160] loss 0.7947 lr 8.13e-04 | 2.9s
+[  34/160] loss 0.7665 lr 8.07e-04 | 2.9s
+[  35/160] loss 0.7363 lr 8.01e-04 | 2.9s | val mIoU 44.67 (best 44.67)
+[  36/160] loss 0.7323 lr 7.95e-04 | 2.9s
+[  37/160] loss 0.7762 lr 7.89e-04 | 2.9s
+[  38/160] loss 0.7825 lr 7.84e-04 | 2.9s
+[  39/160] loss 0.7524 lr 7.78e-04 | 2.9s
+[  40/160] loss 0.7024 lr 7.72e-04 | 2.9s | val mIoU 41.88 (best 44.67)
+[  41/160] loss 0.7298 lr 7.66e-04 | 2.9s
+[  42/160] loss 0.6978 lr 7.61e-04 | 2.9s
+[  43/160] loss 0.6821 lr 7.55e-04 | 2.9s
+[  44/160] loss 0.6937 lr 7.49e-04 | 2.9s
+[  45/160] loss 0.7161 lr 7.43e-04 | 2.9s | val mIoU 48.56 (best 48.56)
+[  46/160] loss 0.6750 lr 7.37e-04 | 2.9s
+[  47/160] loss 0.6691 lr 7.31e-04 | 2.9s
+[  48/160] loss 0.6389 lr 7.26e-04 | 2.9s
+[  49/160] loss 0.7001 lr 7.20e-04 | 2.9s
+[  50/160] loss 0.6555 lr 7.14e-04 | 2.9s | val mIoU 53.73 (best 53.73)
+[  51/160] loss 0.6389 lr 7.08e-04 | 2.9s
+[  52/160] loss 0.6809 lr 7.02e-04 | 2.9s
+[  53/160] loss 0.6171 lr 6.96e-04 | 5.8s
+[  54/160] loss 0.6154 lr 6.91e-04 | 2.9s
+[  55/160] loss 0.5891 lr 6.85e-04 | 2.9s | val mIoU 51.28 (best 53.73)
+[  56/160] loss 0.6033 lr 6.79e-04 | 2.9s
+[  57/160] loss 0.5914 lr 6.73e-04 | 2.9s
+[  58/160] loss 0.5927 lr 6.67e-04 | 2.9s
+[  59/160] loss 0.6183 lr 6.61e-04 | 2.9s
+[  60/160] loss 0.5796 lr 6.55e-04 | 2.9s | val mIoU 55.57 (best 55.57)
+[  61/160] loss 0.5527 lr 6.49e-04 | 2.9s
+[  62/160] loss 0.5681 lr 6.44e-04 | 2.9s
+[  63/160] loss 0.5611 lr 6.38e-04 | 2.9s
+[  64/160] loss 0.5407 lr 6.32e-04 | 2.9s
+[  65/160] loss 0.5636 lr 6.26e-04 | 3.0s | val mIoU 50.66 (best 55.57)
+[  66/160] loss 0.5483 lr 6.20e-04 | 2.9s
+[  67/160] loss 0.5286 lr 6.14e-04 | 2.9s
+[  68/160] loss 0.5605 lr 6.08e-04 | 2.9s
+[  69/160] loss 0.5435 lr 6.02e-04 | 2.9s
+[  70/160] loss 0.5503 lr 5.96e-04 | 2.9s | val mIoU 54.10 (best 55.57)
+[  71/160] loss 0.5384 lr 5.90e-04 | 2.9s
+[  72/160] loss 0.5914 lr 5.84e-04 | 3.0s
+[  73/160] loss 0.5326 lr 5.78e-04 | 2.9s
+[  74/160] loss 0.5542 lr 5.72e-04 | 2.9s
+[  75/160] loss 0.5328 lr 5.66e-04 | 2.9s | val mIoU 51.71 (best 55.57)
+[  76/160] loss 0.5298 lr 5.60e-04 | 2.9s
+[  77/160] loss 0.5306 lr 5.54e-04 | 2.9s
+[  78/160] loss 0.5386 lr 5.48e-04 | 2.9s
+[  79/160] loss 0.5197 lr 5.42e-04 | 2.9s
+[  80/160] loss 0.4908 lr 5.36e-04 | 2.9s | val mIoU 56.36 (best 56.36)
+[  81/160] loss 0.4714 lr 5.30e-04 | 2.9s
+[  82/160] loss 0.4814 lr 5.24e-04 | 2.9s
+[  83/160] loss 0.4818 lr 5.18e-04 | 2.9s
+[  84/160] loss 0.4633 lr 5.12e-04 | 2.9s
+[  85/160] loss 0.4555 lr 5.06e-04 | 2.9s | val mIoU 55.96 (best 56.36)
+[  86/160] loss 0.4594 lr 5.00e-04 | 2.9s
+[  87/160] loss 0.4685 lr 4.94e-04 | 2.9s
+[  88/160] loss 0.4554 lr 4.88e-04 | 2.9s
+[  89/160] loss 0.4477 lr 4.82e-04 | 2.9s
+[  90/160] loss 0.4732 lr 4.75e-04 | 2.9s | val mIoU 56.00 (best 56.36)
+[  91/160] loss 0.4528 lr 4.69e-04 | 2.9s
+[  92/160] loss 0.4855 lr 4.63e-04 | 2.9s
+[  93/160] loss 0.4735 lr 4.57e-04 | 2.9s
+[  94/160] loss 0.4457 lr 4.51e-04 | 2.9s
+[  95/160] loss 0.4280 lr 4.45e-04 | 2.9s | val mIoU 58.08 (best 58.08)
+[  96/160] loss 0.4269 lr 4.39e-04 | 2.9s
+[  97/160] loss 0.4110 lr 4.32e-04 | 2.9s
+[  98/160] loss 0.4331 lr 4.26e-04 | 2.9s
+[  99/160] loss 0.4406 lr 4.20e-04 | 3.0s
+[ 100/160] loss 0.4269 lr 4.14e-04 | 2.9s | val mIoU 58.25 (best 58.25)
+[ 101/160] loss 0.4194 lr 4.08e-04 | 2.9s
+[ 102/160] loss 0.4135 lr 4.01e-04 | 2.9s
+[ 103/160] loss 0.4226 lr 3.95e-04 | 2.9s
+[ 104/160] loss 0.4049 lr 3.89e-04 | 2.9s
+[ 105/160] loss 0.4181 lr 3.83e-04 | 2.9s | val mIoU 55.36 (best 58.25)
+[ 106/160] loss 0.4385 lr 3.76e-04 | 2.9s
+[ 107/160] loss 0.4136 lr 3.70e-04 | 2.9s
+[ 108/160] loss 0.3997 lr 3.64e-04 | 2.9s
+[ 109/160] loss 0.3971 lr 3.58e-04 | 2.9s
+[ 110/160] loss 0.3869 lr 3.51e-04 | 2.9s | val mIoU 57.42 (best 58.25)
+[ 111/160] loss 0.4191 lr 3.45e-04 | 2.9s
+[ 112/160] loss 0.4139 lr 3.39e-04 | 2.9s
+[ 113/160] loss 0.3890 lr 3.32e-04 | 2.9s
+[ 114/160] loss 0.3772 lr 3.26e-04 | 2.9s
+[ 115/160] loss 0.3755 lr 3.20e-04 | 2.9s | val mIoU 60.34 (best 60.34)
+[ 116/160] loss 0.3670 lr 3.13e-04 | 2.9s
+[ 117/160] loss 0.3659 lr 3.07e-04 | 3.0s
+[ 118/160] loss 0.3630 lr 3.00e-04 | 3.0s
+[ 119/160] loss 0.3717 lr 2.94e-04 | 3.2s
+[ 120/160] loss 0.3910 lr 2.87e-04 | 3.3s | val mIoU 56.17 (best 60.34)
+[ 121/160] loss 0.3730 lr 2.81e-04 | 3.3s
+[ 122/160] loss 0.3612 lr 2.75e-04 | 3.2s
+[ 123/160] loss 0.3732 lr 2.68e-04 | 3.2s
+[ 124/160] loss 0.3623 lr 2.61e-04 | 3.0s
+[ 125/160] loss 0.3298 lr 2.55e-04 | 3.0s | val mIoU 59.35 (best 60.34)
+[ 126/160] loss 0.3455 lr 2.48e-04 | 2.9s
+[ 127/160] loss 0.3592 lr 2.42e-04 | 2.9s
+[ 128/160] loss 0.3552 lr 2.35e-04 | 2.9s
+[ 129/160] loss 0.3367 lr 2.29e-04 | 2.9s
+[ 130/160] loss 0.3383 lr 2.22e-04 | 2.9s | val mIoU 59.38 (best 60.34)
+[ 131/160] loss 0.3487 lr 2.15e-04 | 2.9s
+[ 132/160] loss 0.3500 lr 2.09e-04 | 2.9s
+[ 133/160] loss 0.3405 lr 2.02e-04 | 2.9s
+[ 134/160] loss 0.3389 lr 1.95e-04 | 2.9s
+[ 135/160] loss 0.3197 lr 1.88e-04 | 2.9s | val mIoU 62.13 (best 62.13)
+[ 136/160] loss 0.3385 lr 1.82e-04 | 2.9s
+[ 137/160] loss 0.3306 lr 1.75e-04 | 3.0s
+[ 138/160] loss 0.3382 lr 1.68e-04 | 2.9s
+[ 139/160] loss 0.3146 lr 1.61e-04 | 2.9s
+[ 140/160] loss 0.3187 lr 1.54e-04 | 3.0s | val mIoU 61.19 (best 62.13)
+[ 141/160] loss 0.3209 lr 1.47e-04 | 2.9s
+[ 142/160] loss 0.3406 lr 1.40e-04 | 2.9s
+[ 143/160] loss 0.3152 lr 1.33e-04 | 2.9s
+[ 144/160] loss 0.3061 lr 1.26e-04 | 2.9s
+[ 145/160] loss 0.3171 lr 1.19e-04 | 2.9s | val mIoU 61.42 (best 62.13)
+[ 146/160] loss 0.3125 lr 1.12e-04 | 3.0s
+[ 147/160] loss 0.3111 lr 1.05e-04 | 3.0s
+[ 148/160] loss 0.3143 lr 9.75e-05 | 2.9s
+[ 149/160] loss 0.3093 lr 9.02e-05 | 2.9s
+[ 150/160] loss 0.3031 lr 8.28e-05 | 2.9s | val mIoU 62.56 (best 62.56)
+[ 151/160] loss 0.3102 lr 7.53e-05 | 2.9s
+[ 152/160] loss 0.3067 lr 6.78e-05 | 3.0s
+[ 153/160] loss 0.2984 lr 6.02e-05 | 2.9s
+[ 154/160] loss 0.2959 lr 5.24e-05 | 2.9s
+[ 155/160] loss 0.2950 lr 4.45e-05 | 2.9s | val mIoU 62.60 (best 62.60)
+[ 156/160] loss 0.2985 lr 3.65e-05 | 2.9s
+[ 157/160] loss 0.3036 lr 2.83e-05 | 2.9s
+[ 158/160] loss 0.2927 lr 1.98e-05 | 2.9s
+[ 159/160] loss 0.2811 lr 1.08e-05 | 2.9s
+[ 160/160] loss 0.3008 lr 6.18e-07 | 3.0s | val mIoU 62.96 (best 62.96)
+==> TEST (best val checkpoint, epoch 160): mIoU 54.65 | pixel acc 85.78
+    0.754M params | 9.57 GMACs | FPS eager 144.5, CUDA graph 148.9 | trained in 9.7 min | peak 2.57 GB
+[17:08:41] done unet_pm_frac0.5 in 10.6 min
+[17:08:41] evaluate LMIINet at 720x960
+[17:09:37] report assets: 11 runs, 13 benchmark rows
+[17:09:55] qualitative figure written
+[17:12:52] finished (report phase skipped: latexmk hung on Windows; PDF is compiled separately)
+[17:13:34] run.py phases=['main'] epochs=80 seeds=[42, 7, 123] python=3.11.9
+[17:13:34] skip lmiinet (finished)
+[17:13:34] skip unet (finished)
+[17:13:34] skip unet_pm (finished)
+[17:13:34] train lmiinet_seed7: train.py --model lmiinet --epochs 80 --seed 7 --workers 2 --train-fraction 1.0
+==> run 'lmiinet_seed7' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet_seed7
+    train 367 images (fraction 1.0), val 101, data on GPU
+    lmiinet: 727,073 params | precision bf16 | step mode eager
+[   1/80] loss 2.9634 lr 9.89e-04 | 179.0s
+[   2/80] loss 1.7839 lr 9.78e-04 | 34.1s
+[   3/80] loss 1.4759 lr 9.66e-04 | 34.1s
+[   4/80] loss 1.2994 lr 9.55e-04 | 34.0s
+[   5/80] loss 1.2187 lr 9.44e-04 | 34.7s | val mIoU 42.15 (best 42.15)
+[   6/80] loss 1.1324 lr 9.32e-04 | 23.5s
+[   7/80] loss 1.0761 lr 9.21e-04 | 23.1s
+[   8/80] loss 0.9770 lr 9.10e-04 | 20.3s
+[   9/80] loss 1.0218 lr 8.98e-04 | 20.4s
+[  10/80] loss 0.8983 lr 8.87e-04 | 20.2s | val mIoU 48.13 (best 48.13)
+[  11/80] loss 0.9083 lr 8.76e-04 | 21.1s
+[  12/80] loss 0.8433 lr 8.64e-04 | 21.0s
+[  13/80] loss 0.8631 lr 8.53e-04 | 21.1s
+[  14/80] loss 0.8173 lr 8.41e-04 | 21.1s
+[  15/80] loss 0.7733 lr 8.30e-04 | 20.9s | val mIoU 55.18 (best 55.18)
+[  16/80] loss 0.7780 lr 8.18e-04 | 21.2s
+[  17/80] loss 0.7236 lr 8.07e-04 | 21.1s
+[  18/80] loss 0.7337 lr 7.95e-04 | 21.2s
+[  19/80] loss 0.7144 lr 7.84e-04 | 21.1s
+[  20/80] loss 0.6726 lr 7.72e-04 | 21.2s | val mIoU 58.04 (best 58.04)
+[  21/80] loss 0.6703 lr 7.61e-04 | 21.1s
+[  22/80] loss 0.6423 lr 7.49e-04 | 21.2s
+[  23/80] loss 0.6539 lr 7.37e-04 | 21.3s
+[  24/80] loss 0.6217 lr 7.26e-04 | 21.1s
+[  25/80] loss 0.6548 lr 7.14e-04 | 21.1s | val mIoU 58.95 (best 58.95)
+[  26/80] loss 0.6050 lr 7.02e-04 | 21.3s
+[  27/80] loss 0.5956 lr 6.91e-04 | 21.0s
+[  28/80] loss 0.5682 lr 6.79e-04 | 21.1s
+[  29/80] loss 0.5718 lr 6.67e-04 | 21.3s
+[  30/80] loss 0.5558 lr 6.55e-04 | 21.7s | val mIoU 64.03 (best 64.03)
+[  31/80] loss 0.5399 lr 6.44e-04 | 21.9s
+[  32/80] loss 0.5355 lr 6.32e-04 | 21.9s
+[  33/80] loss 0.5317 lr 6.20e-04 | 21.8s
+[  34/80] loss 0.5231 lr 6.08e-04 | 21.7s
+[  35/80] loss 0.5117 lr 5.96e-04 | 21.3s | val mIoU 57.72 (best 64.03)
+[  36/80] loss 0.5076 lr 5.84e-04 | 21.0s
+[  37/80] loss 0.5004 lr 5.72e-04 | 21.3s
+[  38/80] loss 0.4958 lr 5.60e-04 | 21.3s
+[  39/80] loss 0.5010 lr 5.48e-04 | 21.2s
+[  40/80] loss 0.4914 lr 5.36e-04 | 21.4s | val mIoU 63.01 (best 64.03)
+[  41/80] loss 0.4711 lr 5.24e-04 | 21.1s
+[  42/80] loss 0.4827 lr 5.12e-04 | 21.1s
+[  43/80] loss 0.4672 lr 5.00e-04 | 26.8s
+[17:35:19] finished
+[  44/80] loss 0.4591 lr 4.88e-04 | 35.0s
+[  45/80] loss 0.4564 lr 4.75e-04 | 26.8s | val mIoU 62.97 (best 64.03)
+[  46/80] loss 0.4582 lr 4.63e-04 | 27.1s
+[  47/80] loss 0.4657 lr 4.51e-04 | 26.9s
+[  48/80] loss 0.4457 lr 4.39e-04 | 28.3s
+[  49/80] loss 0.4450 lr 4.26e-04 | 23.4s
+[  50/80] loss 0.4292 lr 4.14e-04 | 17.9s | val mIoU 64.07 (best 64.07)
+[  51/80] loss 0.4338 lr 4.01e-04 | 17.6s
+[  52/80] loss 0.4250 lr 3.89e-04 | 17.6s
+[  53/80] loss 0.4201 lr 3.77e-04 | 17.6s
+[  54/80] loss 0.4031 lr 3.64e-04 | 17.9s
+[  55/80] loss 0.4157 lr 3.51e-04 | 17.7s | val mIoU 65.24 (best 65.24)
+[  56/80] loss 0.4040 lr 3.39e-04 | 17.5s
+[  57/80] loss 0.3972 lr 3.26e-04 | 17.6s
+[  58/80] loss 0.4076 lr 3.13e-04 | 17.7s
+[  59/80] loss 0.3948 lr 3.00e-04 | 17.8s
+[  60/80] loss 0.4047 lr 2.87e-04 | 17.8s | val mIoU 66.80 (best 66.80)
+[  61/80] loss 0.3982 lr 2.75e-04 | 17.3s
+[  62/80] loss 0.3869 lr 2.61e-04 | 17.6s
+[  63/80] loss 0.3825 lr 2.48e-04 | 17.4s
+[  64/80] loss 0.3876 lr 2.35e-04 | 17.1s
+[  65/80] loss 0.3825 lr 2.22e-04 | 17.2s | val mIoU 63.47 (best 66.80)
+[  66/80] loss 0.3734 lr 2.09e-04 | 17.0s
+[  67/80] loss 0.3797 lr 1.95e-04 | 17.3s
+[  68/80] loss 0.3758 lr 1.82e-04 | 17.4s
+[  69/80] loss 0.3787 lr 1.68e-04 | 17.2s
+[  70/80] loss 0.3699 lr 1.54e-04 | 17.4s | val mIoU 66.87 (best 66.87)
+[  71/80] loss 0.3652 lr 1.40e-04 | 17.1s
+[  72/80] loss 0.3722 lr 1.26e-04 | 17.3s
+[  73/80] loss 0.3605 lr 1.12e-04 | 17.2s
+[  74/80] loss 0.3615 lr 9.75e-05 | 17.3s
+[  75/80] loss 0.3583 lr 8.28e-05 | 17.3s | val mIoU 67.26 (best 67.26)
+[  76/80] loss 0.3614 lr 6.78e-05 | 17.1s
+[  77/80] loss 0.3499 lr 5.24e-05 | 17.1s
+[  78/80] loss 0.3528 lr 3.65e-05 | 17.0s
+[  79/80] loss 0.3532 lr 1.98e-05 | 17.2s
+[  80/80] loss 0.3524 lr 6.30e-07 | 17.1s | val mIoU 67.44 (best 67.44)
+==> TEST (best val checkpoint, epoch 80): mIoU 55.94 | pixel acc 85.82
+    0.727M params | 4.99 GMACs | FPS eager 13.6, CUDA graph 75.1 | trained in 33.3 min | peak 4.24 GB
+[17:49:13] done lmiinet_seed7 in 35.6 min
+[17:49:13] train unet_seed7: train.py --model unet --epochs 80 --seed 7 --workers 2 --train-fraction 1.0
+==> run 'unet_seed7' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\unet_seed7
+    train 367 images (fraction 1.0), val 101, data on GPU
+    unet: 1,927,339 params | precision bf16 | step mode eager
+[   1/80] loss 2.1315 lr 9.89e-04 | 56.6s
+[   2/80] loss 1.5530 lr 9.78e-04 | 6.8s
+[   3/80] loss 1.4046 lr 9.66e-04 | 6.8s
+[   4/80] loss 1.3058 lr 9.55e-04 | 6.8s
+[   5/80] loss 1.2102 lr 9.44e-04 | 6.8s | val mIoU 28.41 (best 28.41)
+[   6/80] loss 1.1466 lr 9.32e-04 | 6.8s
+[   7/80] loss 1.1024 lr 9.21e-04 | 6.9s
+[   8/80] loss 1.0126 lr 9.10e-04 | 7.0s
+[   9/80] loss 1.0191 lr 8.98e-04 | 7.0s
+[  10/80] loss 0.9443 lr 8.87e-04 | 7.0s | val mIoU 39.40 (best 39.40)
+[  11/80] loss 0.9600 lr 8.76e-04 | 7.1s
+[  12/80] loss 0.9021 lr 8.64e-04 | 7.1s
+[  13/80] loss 0.9139 lr 8.53e-04 | 7.1s
+[  14/80] loss 0.8731 lr 8.41e-04 | 7.1s
+[  15/80] loss 0.8353 lr 8.30e-04 | 7.2s | val mIoU 40.86 (best 40.86)
+[  16/80] loss 0.8295 lr 8.18e-04 | 7.2s
+[  17/80] loss 0.7771 lr 8.07e-04 | 7.2s
+[  18/80] loss 0.8108 lr 7.95e-04 | 7.2s
+[  19/80] loss 0.7750 lr 7.84e-04 | 7.2s
+[  20/80] loss 0.7757 lr 7.72e-04 | 7.2s | val mIoU 40.60 (best 40.86)
+[  21/80] loss 0.7509 lr 7.61e-04 | 7.2s
+[  22/80] loss 0.7142 lr 7.49e-04 | 7.3s
+[  23/80] loss 0.6834 lr 7.37e-04 | 7.2s
+[  24/80] loss 0.6674 lr 7.26e-04 | 7.3s
+[  25/80] loss 0.6859 lr 7.14e-04 | 7.3s | val mIoU 47.63 (best 47.63)
+[  26/80] loss 0.6677 lr 7.02e-04 | 7.3s
+[  27/80] loss 0.6719 lr 6.91e-04 | 7.3s
+[  28/80] loss 0.6355 lr 6.79e-04 | 7.3s
+[  29/80] loss 0.6207 lr 6.67e-04 | 7.3s
+[  30/80] loss 0.6269 lr 6.55e-04 | 7.3s | val mIoU 50.87 (best 50.87)
+[  31/80] loss 0.5940 lr 6.44e-04 | 7.3s
+[  32/80] loss 0.5858 lr 6.32e-04 | 7.3s
+[  33/80] loss 0.5936 lr 6.20e-04 | 7.3s
+[  34/80] loss 0.5696 lr 6.08e-04 | 7.3s
+[  35/80] loss 0.5507 lr 5.96e-04 | 7.3s | val mIoU 49.94 (best 50.87)
+[  36/80] loss 0.5673 lr 5.84e-04 | 7.3s
+[  37/80] loss 0.5552 lr 5.72e-04 | 7.3s
+[  38/80] loss 0.5410 lr 5.60e-04 | 7.3s
+[  39/80] loss 0.5427 lr 5.48e-04 | 7.3s
+[  40/80] loss 0.5170 lr 5.36e-04 | 7.3s | val mIoU 58.93 (best 58.93)
+[  41/80] loss 0.5037 lr 5.24e-04 | 7.3s
+[  42/80] loss 0.5109 lr 5.12e-04 | 7.3s
+[  43/80] loss 0.5019 lr 5.00e-04 | 7.3s
+[  44/80] loss 0.4815 lr 4.88e-04 | 7.3s
+[  45/80] loss 0.4652 lr 4.75e-04 | 7.3s | val mIoU 57.85 (best 58.93)
+[  46/80] loss 0.4610 lr 4.63e-04 | 7.3s
+[  47/80] loss 0.4614 lr 4.51e-04 | 7.3s
+[  48/80] loss 0.4659 lr 4.39e-04 | 7.3s
+[  49/80] loss 0.4541 lr 4.26e-04 | 7.3s
+[  50/80] loss 0.4303 lr 4.14e-04 | 7.3s | val mIoU 57.12 (best 58.93)
+[  51/80] loss 0.4621 lr 4.01e-04 | 7.3s
+[  52/80] loss 0.4201 lr 3.89e-04 | 7.3s
+[  53/80] loss 0.4208 lr 3.77e-04 | 7.3s
+[  54/80] loss 0.4068 lr 3.64e-04 | 7.3s
+[  55/80] loss 0.4075 lr 3.51e-04 | 7.3s | val mIoU 57.82 (best 58.93)
+[  56/80] loss 0.4194 lr 3.39e-04 | 7.3s
+[  57/80] loss 0.3794 lr 3.26e-04 | 7.3s
+[  58/80] loss 0.3846 lr 3.13e-04 | 7.3s
+[  59/80] loss 0.3677 lr 3.00e-04 | 7.4s
+[  60/80] loss 0.3954 lr 2.87e-04 | 7.4s | val mIoU 57.69 (best 58.93)
+[  61/80] loss 0.3844 lr 2.75e-04 | 7.3s
+[  62/80] loss 0.3663 lr 2.61e-04 | 7.3s
+[  63/80] loss 0.3426 lr 2.48e-04 | 7.4s
+[  64/80] loss 0.3531 lr 2.35e-04 | 7.3s
+[  65/80] loss 0.3509 lr 2.22e-04 | 7.3s | val mIoU 57.89 (best 58.93)
+[  66/80] loss 0.3324 lr 2.09e-04 | 7.4s
+[  67/80] loss 0.3380 lr 1.95e-04 | 7.3s
+[  68/80] loss 0.3343 lr 1.82e-04 | 7.3s
+[  69/80] loss 0.3360 lr 1.68e-04 | 7.3s
+[  70/80] loss 0.3317 lr 1.54e-04 | 7.3s | val mIoU 63.81 (best 63.81)
+[  71/80] loss 0.3177 lr 1.40e-04 | 7.3s
+[  72/80] loss 0.3260 lr 1.26e-04 | 7.4s
+[  73/80] loss 0.3079 lr 1.12e-04 | 7.3s
+[  74/80] loss 0.3083 lr 9.75e-05 | 7.3s
+[  75/80] loss 0.3016 lr 8.28e-05 | 7.4s | val mIoU 64.55 (best 64.55)
+[  76/80] loss 0.3025 lr 6.78e-05 | 7.3s
+[  77/80] loss 0.2882 lr 5.24e-05 | 7.4s
+[  78/80] loss 0.2885 lr 3.65e-05 | 7.3s
+[  79/80] loss 0.2841 lr 1.98e-05 | 7.4s
+[  80/80] loss 0.2810 lr 6.30e-07 | 7.4s | val mIoU 65.44 (best 65.44)
+==> TEST (best val checkpoint, epoch 80): mIoU 56.43 | pixel acc 86.31
+    1.927M params | 24.36 GMACs | FPS eager 101.0, CUDA graph 101.7 | trained in 11.2 min | peak 3.07 GB
+[18:01:20] done unet_seed7 in 12.1 min
+[18:01:20] train unet_pm_seed7: train.py --model unet_pm --epochs 80 --seed 7 --workers 2 --train-fraction 1.0
+==> run 'unet_pm_seed7' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\unet_pm_seed7
+    train 367 images (fraction 1.0), val 101, data on GPU
+    unet_pm: 753,871 params | precision bf16 | step mode eager
+[   1/80] loss 2.0080 lr 9.89e-04 | 69.0s
+[   2/80] loss 1.6319 lr 9.78e-04 | 5.5s
+[   3/80] loss 1.4976 lr 9.66e-04 | 5.5s
+[   4/80] loss 1.3939 lr 9.55e-04 | 5.5s
+[   5/80] loss 1.2967 lr 9.44e-04 | 5.6s | val mIoU 29.54 (best 29.54)
+[   6/80] loss 1.2110 lr 9.32e-04 | 5.6s
+[   7/80] loss 1.1804 lr 9.21e-04 | 5.5s
+[   8/80] loss 1.0717 lr 9.10e-04 | 5.6s
+[   9/80] loss 1.0788 lr 8.98e-04 | 5.6s
+[  10/80] loss 0.9894 lr 8.87e-04 | 5.7s | val mIoU 34.93 (best 34.93)
+[  11/80] loss 0.9746 lr 8.76e-04 | 5.7s
+[  12/80] loss 0.9342 lr 8.64e-04 | 5.7s
+[  13/80] loss 0.9566 lr 8.53e-04 | 5.7s
+[  14/80] loss 0.9165 lr 8.41e-04 | 5.7s
+[  15/80] loss 0.8647 lr 8.30e-04 | 5.8s | val mIoU 34.81 (best 34.93)
+[  16/80] loss 0.8629 lr 8.18e-04 | 5.8s
+[  17/80] loss 0.8084 lr 8.07e-04 | 5.8s
+[  18/80] loss 0.8271 lr 7.95e-04 | 5.8s
+[  19/80] loss 0.8103 lr 7.84e-04 | 5.8s
+[  20/80] loss 0.7858 lr 7.72e-04 | 5.8s | val mIoU 38.20 (best 38.20)
+[  21/80] loss 0.7475 lr 7.61e-04 | 5.8s
+[  22/80] loss 0.7229 lr 7.49e-04 | 5.8s
+[  23/80] loss 0.7069 lr 7.37e-04 | 5.9s
+[  24/80] loss 0.7011 lr 7.26e-04 | 5.8s
+[  25/80] loss 0.7278 lr 7.14e-04 | 5.8s | val mIoU 48.90 (best 48.90)
+[  26/80] loss 0.6880 lr 7.02e-04 | 5.8s
+[  27/80] loss 0.6672 lr 6.91e-04 | 5.9s
+[  28/80] loss 0.6461 lr 6.79e-04 | 5.9s
+[  29/80] loss 0.6493 lr 6.67e-04 | 5.9s
+[  30/80] loss 0.6643 lr 6.55e-04 | 5.9s | val mIoU 45.32 (best 48.90)
+[  31/80] loss 0.6266 lr 6.44e-04 | 5.8s
+[  32/80] loss 0.6260 lr 6.32e-04 | 5.9s
+[  33/80] loss 0.6124 lr 6.20e-04 | 5.9s
+[  34/80] loss 0.5924 lr 6.08e-04 | 5.8s
+[  35/80] loss 0.5781 lr 5.96e-04 | 5.9s | val mIoU 45.32 (best 48.90)
+[  36/80] loss 0.5749 lr 5.84e-04 | 5.9s
+[  37/80] loss 0.5529 lr 5.72e-04 | 5.9s
+[  38/80] loss 0.5550 lr 5.60e-04 | 5.9s
+[  39/80] loss 0.5798 lr 5.48e-04 | 5.9s
+[  40/80] loss 0.5614 lr 5.36e-04 | 5.9s | val mIoU 53.28 (best 53.28)
+[  41/80] loss 0.5286 lr 5.24e-04 | 5.9s
+[  42/80] loss 0.5504 lr 5.12e-04 | 5.9s
+[  43/80] loss 0.5154 lr 5.00e-04 | 5.9s
+[  44/80] loss 0.5274 lr 4.88e-04 | 5.9s
+[  45/80] loss 0.4968 lr 4.75e-04 | 5.9s | val mIoU 53.14 (best 53.28)
+[  46/80] loss 0.5056 lr 4.63e-04 | 5.9s
+[  47/80] loss 0.5052 lr 4.51e-04 | 5.9s
+[  48/80] loss 0.5101 lr 4.39e-04 | 5.9s
+[  49/80] loss 0.4923 lr 4.26e-04 | 5.9s
+[  50/80] loss 0.4653 lr 4.14e-04 | 5.9s | val mIoU 55.74 (best 55.74)
+[  51/80] loss 0.4930 lr 4.01e-04 | 5.9s
+[  52/80] loss 0.4669 lr 3.89e-04 | 5.9s
+[  53/80] loss 0.4511 lr 3.77e-04 | 5.9s
+[  54/80] loss 0.4552 lr 3.64e-04 | 5.9s
+[  55/80] loss 0.4592 lr 3.51e-04 | 5.9s | val mIoU 54.77 (best 55.74)
+[  56/80] loss 0.4510 lr 3.39e-04 | 5.9s
+[  57/80] loss 0.4310 lr 3.26e-04 | 5.9s
+[  58/80] loss 0.4333 lr 3.13e-04 | 5.9s
+[  59/80] loss 0.4173 lr 3.00e-04 | 5.9s
+[  60/80] loss 0.4366 lr 2.87e-04 | 5.9s | val mIoU 60.25 (best 60.25)
+[  61/80] loss 0.4341 lr 2.75e-04 | 5.9s
+[  62/80] loss 0.4158 lr 2.61e-04 | 5.9s
+[  63/80] loss 0.4023 lr 2.48e-04 | 5.9s
+[  64/80] loss 0.4053 lr 2.35e-04 | 5.9s
+[  65/80] loss 0.3985 lr 2.22e-04 | 5.9s | val mIoU 61.05 (best 61.05)
+[  66/80] loss 0.3891 lr 2.09e-04 | 5.9s
+[  67/80] loss 0.3975 lr 1.95e-04 | 5.9s
+[  68/80] loss 0.3883 lr 1.82e-04 | 5.9s
+[  69/80] loss 0.3934 lr 1.68e-04 | 5.9s
+[  70/80] loss 0.3904 lr 1.54e-04 | 5.9s | val mIoU 60.39 (best 61.05)
+[  71/80] loss 0.3769 lr 1.40e-04 | 5.9s
+[  72/80] loss 0.3882 lr 1.26e-04 | 5.9s
+[  73/80] loss 0.3696 lr 1.12e-04 | 5.9s
+[  74/80] loss 0.3733 lr 9.75e-05 | 5.9s
+[  75/80] loss 0.3624 lr 8.28e-05 | 5.9s | val mIoU 60.04 (best 61.05)
+[  76/80] loss 0.3670 lr 6.78e-05 | 5.9s
+[  77/80] loss 0.3517 lr 5.24e-05 | 5.9s
+[  78/80] loss 0.3560 lr 3.65e-05 | 5.9s
+[  79/80] loss 0.3491 lr 1.98e-05 | 5.9s
+[  80/80] loss 0.3493 lr 6.30e-07 | 5.9s | val mIoU 62.41 (best 62.41)
+==> TEST (best val checkpoint, epoch 80): mIoU 54.52 | pixel acc 85.09
+    0.754M params | 9.57 GMACs | FPS eager 125.8, CUDA graph 161.0 | trained in 9.4 min | peak 2.69 GB
+[18:11:41] done unet_pm_seed7 in 10.3 min
+[18:11:41] train lmiinet_seed123: train.py --model lmiinet --epochs 80 --seed 123 --workers 2 --train-fraction 1.0
+==> run 'lmiinet_seed123' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\lmiinet_seed123
+    train 367 images (fraction 1.0), val 101, data on GPU
+    lmiinet: 727,073 params | precision bf16 | step mode eager
+[   1/80] loss 2.8926 lr 9.89e-04 | 143.4s
+[   2/80] loss 1.8040 lr 9.78e-04 | 16.7s
+[   3/80] loss 1.5263 lr 9.66e-04 | 16.8s
+[   4/80] loss 1.3866 lr 9.55e-04 | 16.8s
+[   5/80] loss 1.2742 lr 9.44e-04 | 16.8s | val mIoU 45.04 (best 45.04)
+[   6/80] loss 1.1694 lr 9.32e-04 | 16.9s
+[   7/80] loss 1.1000 lr 9.21e-04 | 16.7s
+[   8/80] loss 1.0367 lr 9.10e-04 | 16.5s
+[   9/80] loss 0.9990 lr 8.98e-04 | 16.6s
+[  10/80] loss 0.9416 lr 8.87e-04 | 16.4s | val mIoU 47.69 (best 47.69)
+[  11/80] loss 0.8703 lr 8.76e-04 | 16.7s
+[  12/80] loss 0.8178 lr 8.64e-04 | 17.0s
+[  13/80] loss 0.8196 lr 8.53e-04 | 16.9s
+[  14/80] loss 0.7946 lr 8.41e-04 | 17.1s
+[  15/80] loss 0.7779 lr 8.30e-04 | 16.8s | val mIoU 53.74 (best 53.74)
+[  16/80] loss 0.7329 lr 8.18e-04 | 16.9s
+[  17/80] loss 0.7208 lr 8.07e-04 | 16.7s
+[  18/80] loss 0.6908 lr 7.95e-04 | 16.8s
+[  19/80] loss 0.7188 lr 7.84e-04 | 16.8s
+[  20/80] loss 0.7337 lr 7.72e-04 | 16.9s | val mIoU 54.28 (best 54.28)
+[  21/80] loss 0.6831 lr 7.61e-04 | 17.0s
+[  22/80] loss 0.6364 lr 7.49e-04 | 16.9s
+[  23/80] loss 0.6657 lr 7.37e-04 | 17.8s
+[  24/80] loss 0.6691 lr 7.26e-04 | 18.2s
+[  25/80] loss 0.6398 lr 7.14e-04 | 18.1s | val mIoU 56.44 (best 56.44)
+[  26/80] loss 0.6344 lr 7.02e-04 | 16.9s
+[  27/80] loss 0.5977 lr 6.91e-04 | 16.9s
+[  28/80] loss 0.5773 lr 6.79e-04 | 16.8s
+[  29/80] loss 0.5824 lr 6.67e-04 | 17.0s
+[  30/80] loss 0.5825 lr 6.55e-04 | 17.0s | val mIoU 62.26 (best 62.26)
+[  31/80] loss 0.5617 lr 6.44e-04 | 16.7s
+[  32/80] loss 0.5429 lr 6.32e-04 | 16.7s
+[  33/80] loss 0.5298 lr 6.20e-04 | 16.7s
+[  34/80] loss 0.5604 lr 6.08e-04 | 16.6s
+[  35/80] loss 0.5287 lr 5.96e-04 | 16.6s | val mIoU 58.38 (best 62.26)
+[  36/80] loss 0.5054 lr 5.84e-04 | 16.7s
+[  37/80] loss 0.5322 lr 5.72e-04 | 16.8s
+[  38/80] loss 0.5046 lr 5.60e-04 | 16.6s
+[  39/80] loss 0.4925 lr 5.48e-04 | 16.6s
+[  40/80] loss 0.4829 lr 5.36e-04 | 16.8s | val mIoU 62.77 (best 62.77)
+[  41/80] loss 0.4752 lr 5.24e-04 | 17.3s
+[  42/80] loss 0.4761 lr 5.12e-04 | 17.1s
+[  43/80] loss 0.4941 lr 5.00e-04 | 16.6s
+[  44/80] loss 0.4711 lr 4.88e-04 | 16.6s
+[  45/80] loss 0.4579 lr 4.75e-04 | 16.8s | val mIoU 63.27 (best 63.27)
+[  46/80] loss 0.4814 lr 4.63e-04 | 16.7s
+[  47/80] loss 0.4498 lr 4.51e-04 | 16.5s
+[  48/80] loss 0.4461 lr 4.39e-04 | 16.5s
+[  49/80] loss 0.4352 lr 4.26e-04 | 16.7s
+[  50/80] loss 0.4416 lr 4.14e-04 | 16.6s | val mIoU 60.78 (best 63.27)
+[  51/80] loss 0.4351 lr 4.01e-04 | 16.9s
+[  52/80] loss 0.4303 lr 3.89e-04 | 16.7s
+[  53/80] loss 0.4222 lr 3.77e-04 | 16.7s
+[  54/80] loss 0.4226 lr 3.64e-04 | 16.8s
+[  55/80] loss 0.4202 lr 3.51e-04 | 16.7s | val mIoU 64.32 (best 64.32)
+[  56/80] loss 0.4092 lr 3.39e-04 | 16.6s
+[  57/80] loss 0.4023 lr 3.26e-04 | 16.6s
+[  58/80] loss 0.4127 lr 3.13e-04 | 16.6s
+[  59/80] loss 0.4063 lr 3.00e-04 | 16.7s
+[  60/80] loss 0.4090 lr 2.87e-04 | 16.6s | val mIoU 60.96 (best 64.32)
+[  61/80] loss 0.3940 lr 2.75e-04 | 16.5s
+[  62/80] loss 0.3879 lr 2.61e-04 | 16.7s
+[  63/80] loss 0.3804 lr 2.48e-04 | 16.6s
+[  64/80] loss 0.3819 lr 2.35e-04 | 16.6s
+[  65/80] loss 0.3808 lr 2.22e-04 | 16.6s | val mIoU 64.93 (best 64.93)
+[  66/80] loss 0.3854 lr 2.09e-04 | 17.0s
+[  67/80] loss 0.3848 lr 1.95e-04 | 17.2s
+[  68/80] loss 0.3783 lr 1.82e-04 | 17.1s
+[  69/80] loss 0.3715 lr 1.68e-04 | 17.1s
+[  70/80] loss 0.3667 lr 1.54e-04 | 17.0s | val mIoU 64.80 (best 64.93)
+[  71/80] loss 0.3652 lr 1.40e-04 | 16.9s
+[  72/80] loss 0.3696 lr 1.26e-04 | 16.9s
+[  73/80] loss 0.3646 lr 1.12e-04 | 16.9s
+[  74/80] loss 0.3664 lr 9.75e-05 | 17.1s
+[  75/80] loss 0.3628 lr 8.28e-05 | 16.8s | val mIoU 64.64 (best 64.93)
+[  76/80] loss 0.3483 lr 6.78e-05 | 17.1s
+[  77/80] loss 0.3449 lr 5.24e-05 | 16.8s
+[  78/80] loss 0.3529 lr 3.65e-05 | 16.9s
+[  79/80] loss 0.3535 lr 1.98e-05 | 16.9s
+[  80/80] loss 0.3544 lr 6.30e-07 | 17.0s | val mIoU 64.68 (best 64.93)
+==> TEST (best val checkpoint, epoch 65): mIoU 54.81 | pixel acc 84.55
+    0.727M params | 4.99 GMACs | FPS eager 13.1, CUDA graph 75.1 | trained in 27.0 min | peak 4.46 GB
+[18:41:08] done lmiinet_seed123 in 29.4 min
+[18:41:08] train unet_seed123: train.py --model unet --epochs 80 --seed 123 --workers 2 --train-fraction 1.0
+==> run 'unet_seed123' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\unet_seed123
+    train 367 images (fraction 1.0), val 101, data on GPU
+    unet: 1,927,339 params | precision bf16 | step mode eager
+[   1/80] loss 2.0443 lr 9.89e-04 | 58.1s
+[   2/80] loss 1.5733 lr 9.78e-04 | 6.8s
+[   3/80] loss 1.4258 lr 9.66e-04 | 6.8s
+[   4/80] loss 1.3335 lr 9.55e-04 | 6.9s
+[   5/80] loss 1.2738 lr 9.44e-04 | 7.0s | val mIoU 27.72 (best 27.72)
+[   6/80] loss 1.1670 lr 9.32e-04 | 6.8s
+[   7/80] loss 1.1360 lr 9.21e-04 | 6.9s
+[   8/80] loss 1.0697 lr 9.10e-04 | 7.0s
+[   9/80] loss 1.0210 lr 8.98e-04 | 7.0s
+[  10/80] loss 0.9494 lr 8.87e-04 | 7.1s | val mIoU 38.48 (best 38.48)
+[  11/80] loss 0.8998 lr 8.76e-04 | 7.1s
+[  12/80] loss 0.8891 lr 8.64e-04 | 7.1s
+[  13/80] loss 0.8798 lr 8.53e-04 | 7.2s
+[  14/80] loss 0.8426 lr 8.41e-04 | 7.2s
+[  15/80] loss 0.8460 lr 8.30e-04 | 7.2s | val mIoU 37.33 (best 38.48)
+[  16/80] loss 0.7967 lr 8.18e-04 | 7.2s
+[  17/80] loss 0.7847 lr 8.07e-04 | 7.3s
+[  18/80] loss 0.7874 lr 7.95e-04 | 7.3s
+[  19/80] loss 0.7643 lr 7.84e-04 | 7.3s
+[  20/80] loss 0.7739 lr 7.72e-04 | 7.3s | val mIoU 41.47 (best 41.47)
+[  21/80] loss 0.7024 lr 7.61e-04 | 7.3s
+[  22/80] loss 0.6890 lr 7.49e-04 | 7.3s
+[  23/80] loss 0.7108 lr 7.37e-04 | 7.3s
+[  24/80] loss 0.6778 lr 7.26e-04 | 7.3s
+[  25/80] loss 0.6958 lr 7.14e-04 | 7.3s | val mIoU 47.87 (best 47.87)
+[  26/80] loss 0.6842 lr 7.02e-04 | 7.3s
+[  27/80] loss 0.6569 lr 6.91e-04 | 7.3s
+[  28/80] loss 0.6236 lr 6.79e-04 | 7.4s
+[  29/80] loss 0.6206 lr 6.67e-04 | 7.4s
+[  30/80] loss 0.6206 lr 6.55e-04 | 7.4s | val mIoU 55.62 (best 55.62)
+[  31/80] loss 0.6080 lr 6.44e-04 | 7.3s
+[  32/80] loss 0.5879 lr 6.32e-04 | 7.4s
+[  33/80] loss 0.5644 lr 6.20e-04 | 7.4s
+[  34/80] loss 0.5846 lr 6.08e-04 | 7.4s
+[  35/80] loss 0.5639 lr 5.96e-04 | 7.4s | val mIoU 48.60 (best 55.62)
+[  36/80] loss 0.5268 lr 5.84e-04 | 7.4s
+[  37/80] loss 0.5378 lr 5.72e-04 | 7.4s
+[  38/80] loss 0.5306 lr 5.60e-04 | 7.4s
+[  39/80] loss 0.5256 lr 5.48e-04 | 7.4s
+[  40/80] loss 0.4909 lr 5.36e-04 | 7.4s | val mIoU 58.26 (best 58.26)
+[  41/80] loss 0.4840 lr 5.24e-04 | 7.4s
+[  42/80] loss 0.4747 lr 5.12e-04 | 7.4s
+[  43/80] loss 0.4963 lr 5.00e-04 | 7.4s
+[  44/80] loss 0.4777 lr 4.88e-04 | 7.4s
+[  45/80] loss 0.4645 lr 4.75e-04 | 7.4s | val mIoU 60.81 (best 60.81)
+[  46/80] loss 0.4558 lr 4.63e-04 | 7.4s
+[  47/80] loss 0.4538 lr 4.51e-04 | 7.4s
+[  48/80] loss 0.4423 lr 4.39e-04 | 7.4s
+[  49/80] loss 0.4246 lr 4.26e-04 | 7.4s
+[  50/80] loss 0.4623 lr 4.14e-04 | 7.4s | val mIoU 57.16 (best 60.81)
+[  51/80] loss 0.4489 lr 4.01e-04 | 7.4s
+[  52/80] loss 0.4083 lr 3.89e-04 | 7.4s
+[  53/80] loss 0.4201 lr 3.77e-04 | 7.4s
+[  54/80] loss 0.4243 lr 3.64e-04 | 7.4s
+[  55/80] loss 0.3953 lr 3.51e-04 | 7.4s | val mIoU 62.62 (best 62.62)
+[  56/80] loss 0.3925 lr 3.39e-04 | 7.4s
+[  57/80] loss 0.4021 lr 3.26e-04 | 7.4s
+[  58/80] loss 0.3996 lr 3.13e-04 | 7.4s
+[  59/80] loss 0.3764 lr 3.00e-04 | 7.4s
+[  60/80] loss 0.3779 lr 2.87e-04 | 7.4s | val mIoU 60.97 (best 62.62)
+[  61/80] loss 0.3562 lr 2.75e-04 | 7.4s
+[  62/80] loss 0.3558 lr 2.61e-04 | 7.4s
+[  63/80] loss 0.3444 lr 2.48e-04 | 7.4s
+[  64/80] loss 0.3512 lr 2.35e-04 | 7.4s
+[  65/80] loss 0.3515 lr 2.22e-04 | 7.4s | val mIoU 61.78 (best 62.62)
+[  66/80] loss 0.3577 lr 2.09e-04 | 7.4s
+[  67/80] loss 0.3359 lr 1.95e-04 | 7.4s
+[  68/80] loss 0.3237 lr 1.82e-04 | 7.4s
+[  69/80] loss 0.3214 lr 1.68e-04 | 7.4s
+[  70/80] loss 0.3088 lr 1.54e-04 | 7.4s | val mIoU 65.93 (best 65.93)
+[  71/80] loss 0.3130 lr 1.40e-04 | 7.3s
+[  72/80] loss 0.3094 lr 1.26e-04 | 7.4s
+[  73/80] loss 0.3003 lr 1.12e-04 | 7.4s
+[  74/80] loss 0.2984 lr 9.75e-05 | 7.4s
+[  75/80] loss 0.2954 lr 8.28e-05 | 7.4s | val mIoU 63.94 (best 65.93)
+[  76/80] loss 0.2941 lr 6.78e-05 | 7.4s
+[  77/80] loss 0.2788 lr 5.24e-05 | 7.4s
+[  78/80] loss 0.2860 lr 3.65e-05 | 7.4s
+[  79/80] loss 0.2878 lr 1.98e-05 | 7.4s
+[  80/80] loss 0.2810 lr 6.30e-07 | 7.4s | val mIoU 65.90 (best 65.93)
+==> TEST (best val checkpoint, epoch 70): mIoU 56.69 | pixel acc 86.70
+    1.927M params | 24.36 GMACs | FPS eager 104.9, CUDA graph 105.8 | trained in 11.2 min | peak 3.07 GB
+[18:53:28] done unet_seed123 in 12.3 min
+[18:53:28] train unet_pm_seed123: train.py --model unet_pm --epochs 80 --seed 123 --workers 2 --train-fraction 1.0
+==> run 'unet_pm_seed123' on NVIDIA GeForce RTX 3060 Laptop GPU -> runs\unet_pm_seed123
+    train 367 images (fraction 1.0), val 101, data on GPU
+    unet_pm: 753,871 params | precision bf16 | step mode eager
+[   1/80] loss 1.8853 lr 9.89e-04 | 66.5s
+[   2/80] loss 1.5612 lr 9.78e-04 | 5.4s
+[   3/80] loss 1.3688 lr 9.66e-04 | 5.4s
+[   4/80] loss 1.2605 lr 9.55e-04 | 5.4s
+[   5/80] loss 1.1822 lr 9.44e-04 | 5.4s | val mIoU 32.39 (best 32.39)
+[   6/80] loss 1.1087 lr 9.32e-04 | 5.4s
+[   7/80] loss 1.0811 lr 9.21e-04 | 5.4s
+[   8/80] loss 1.0391 lr 9.10e-04 | 5.4s
+[   9/80] loss 1.0020 lr 8.98e-04 | 5.5s
+[  10/80] loss 0.9445 lr 8.87e-04 | 5.5s | val mIoU 44.50 (best 44.50)
+[  11/80] loss 0.8966 lr 8.76e-04 | 5.5s
+[  12/80] loss 0.8586 lr 8.64e-04 | 5.5s
+[  13/80] loss 0.8728 lr 8.53e-04 | 5.6s
+[  14/80] loss 0.8360 lr 8.41e-04 | 5.6s
+[  15/80] loss 0.8179 lr 8.30e-04 | 5.6s | val mIoU 39.27 (best 44.50)
+[  16/80] loss 0.7850 lr 8.18e-04 | 5.6s
+[  17/80] loss 0.7755 lr 8.07e-04 | 5.6s
+[  18/80] loss 0.7589 lr 7.95e-04 | 5.6s
+[  19/80] loss 0.7543 lr 7.84e-04 | 5.6s
+[  20/80] loss 0.7783 lr 7.72e-04 | 5.6s | val mIoU 40.55 (best 44.50)
+[  21/80] loss 0.6968 lr 7.61e-04 | 5.6s
+[  22/80] loss 0.6752 lr 7.49e-04 | 5.7s
+[  23/80] loss 0.7023 lr 7.37e-04 | 5.7s
+[  24/80] loss 0.6705 lr 7.26e-04 | 5.7s
+[  25/80] loss 0.6743 lr 7.14e-04 | 5.7s | val mIoU 52.44 (best 52.44)
+[  26/80] loss 0.6820 lr 7.02e-04 | 5.7s
+[  27/80] loss 0.6562 lr 6.91e-04 | 5.7s
+[  28/80] loss 0.6434 lr 6.79e-04 | 5.7s
+[  29/80] loss 0.6218 lr 6.67e-04 | 5.7s
+[  30/80] loss 0.6208 lr 6.55e-04 | 5.7s | val mIoU 53.04 (best 53.04)
+[  31/80] loss 0.6136 lr 6.44e-04 | 5.7s
+[  32/80] loss 0.5785 lr 6.32e-04 | 5.7s
+[  33/80] loss 0.5738 lr 6.20e-04 | 5.7s
+[  34/80] loss 0.5941 lr 6.08e-04 | 5.7s
+[  35/80] loss 0.5637 lr 5.96e-04 | 5.7s | val mIoU 51.87 (best 53.04)
+[  36/80] loss 0.5349 lr 5.84e-04 | 5.7s
+[  37/80] loss 0.5489 lr 5.72e-04 | 5.7s
+[  38/80] loss 0.5300 lr 5.60e-04 | 5.7s
+[  39/80] loss 0.5239 lr 5.48e-04 | 5.7s
+[  40/80] loss 0.4975 lr 5.36e-04 | 5.7s | val mIoU 57.01 (best 57.01)
+[  41/80] loss 0.5027 lr 5.24e-04 | 5.7s
+[  42/80] loss 0.4861 lr 5.12e-04 | 5.7s
+[  43/80] loss 0.4883 lr 5.00e-04 | 5.7s
+[  44/80] loss 0.4965 lr 4.88e-04 | 5.7s
+[  45/80] loss 0.4917 lr 4.75e-04 | 5.7s | val mIoU 59.41 (best 59.41)
+[  46/80] loss 0.4771 lr 4.63e-04 | 5.7s
+[  47/80] loss 0.4759 lr 4.51e-04 | 5.7s
+[  48/80] loss 0.4639 lr 4.39e-04 | 5.7s
+[  49/80] loss 0.4668 lr 4.26e-04 | 5.7s
+[  50/80] loss 0.4749 lr 4.14e-04 | 5.7s | val mIoU 50.87 (best 59.41)
+[  51/80] loss 0.4565 lr 4.01e-04 | 5.7s
+[  52/80] loss 0.4333 lr 3.89e-04 | 5.7s
+[  53/80] loss 0.4468 lr 3.77e-04 | 5.7s
+[  54/80] loss 0.4471 lr 3.64e-04 | 5.7s
+[  55/80] loss 0.4355 lr 3.51e-04 | 5.7s | val mIoU 59.34 (best 59.41)
+[  56/80] loss 0.4195 lr 3.39e-04 | 5.7s
+[  57/80] loss 0.4237 lr 3.26e-04 | 5.7s
+[  58/80] loss 0.4286 lr 3.13e-04 | 5.7s
+[  59/80] loss 0.4168 lr 3.00e-04 | 5.7s
+[  60/80] loss 0.4286 lr 2.87e-04 | 5.7s | val mIoU 56.91 (best 59.41)
+[  61/80] loss 0.4042 lr 2.75e-04 | 5.7s
+[  62/80] loss 0.3951 lr 2.61e-04 | 5.7s
+[  63/80] loss 0.3869 lr 2.48e-04 | 5.7s
+[  64/80] loss 0.3939 lr 2.35e-04 | 5.7s
+[  65/80] loss 0.3878 lr 2.22e-04 | 5.7s | val mIoU 58.89 (best 59.41)
+[  66/80] loss 0.3940 lr 2.09e-04 | 5.7s
+[  67/80] loss 0.3810 lr 1.95e-04 | 5.7s
+[  68/80] loss 0.3704 lr 1.82e-04 | 5.7s
+[  69/80] loss 0.3638 lr 1.68e-04 | 5.7s
+[  70/80] loss 0.3549 lr 1.54e-04 | 5.7s | val mIoU 63.23 (best 63.23)
+[  71/80] loss 0.3639 lr 1.40e-04 | 5.7s
+[  72/80] loss 0.3591 lr 1.26e-04 | 5.7s
+[  73/80] loss 0.3563 lr 1.12e-04 | 5.8s
+[  74/80] loss 0.3550 lr 9.75e-05 | 6.3s
+[  75/80] loss 0.3506 lr 8.28e-05 | 6.4s | val mIoU 62.39 (best 63.23)
+[  76/80] loss 0.3469 lr 6.78e-05 | 6.3s
+[  77/80] loss 0.3286 lr 5.24e-05 | 6.3s
+[  78/80] loss 0.3406 lr 3.65e-05 | 6.3s
+[  79/80] loss 0.3451 lr 1.98e-05 | 6.3s
+[  80/80] loss 0.3362 lr 6.30e-07 | 6.3s | val mIoU 63.03 (best 63.23)
+==> TEST (best val checkpoint, epoch 70): mIoU 55.06 | pixel acc 85.77
+    0.754M params | 9.57 GMACs | FPS eager 136.3, CUDA graph 150.8 | trained in 9.2 min | peak 2.69 GB
+[19:03:38] done unet_pm_seed123 in 10.2 min
+[19:03:38] finished
+[19:03:38] run.py phases=['hires', 'assets'] epochs=80 seeds=[42] python=3.11.9
+[19:03:38] evaluate LMIINet at 720x960
+[19:04:35] report assets: 17 runs, 13 benchmark rows
+[19:04:57] qualitative figure written
+[19:04:57] finished

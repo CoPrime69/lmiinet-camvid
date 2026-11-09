@@ -1,0 +1,7 @@
+model,train_fraction,train_images,test_mIoU,test_mIoU_std,runs
+lmiinet,0.25,92,52.465651478511155,,1
+lmiinet,0.5,184,52.869973347920926,,1
+lmiinet,1.0,367,55.59780088496882,,1
+unet_pm,0.25,92,52.71230982649101,,1
+unet_pm,0.5,184,54.65435337318924,,1
+unet_pm,1.0,367,54.32897462092917,,1

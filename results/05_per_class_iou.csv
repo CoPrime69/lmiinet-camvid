@@ -1,0 +1,12 @@
+class,lmiinet_iou,unet_iou,unet_pm_iou
+Sky,90.31,90.17,89.71
+Building,69.33,72.21,68.95
+Pole,27.22,28.17,24.89
+Road,91.05,91.03,90.46
+Sidewalk,73.05,74.96,72.96
+Tree,67.56,70.32,68.86
+SignSymbol,26.15,27.55,25.2
+Fence,17.51,21.28,21.18
+Car,72.05,74.84,71.64
+Pedestrian,35.79,42.26,37.08
+Bicyclist,39.93,32.81,30.05

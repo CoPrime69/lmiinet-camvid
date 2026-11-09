@@ -1,0 +1,676 @@
+\documentclass{article}
+
+% NeurIPS 2025 style. [preprint] prints the author names without claiming acceptance at NeurIPS.
+\PassOptionsToPackage{numbers, compress}{natbib}
+\usepackage[preprint]{neurips_2025}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, calc}
+
+% Every number below comes from results/tables/macros.tex, written by run.py (src/report_assets.py)
+% from the training logs, so the text cannot drift from the experiments.
+\input{results/tables/macros}
+
+\newif\ifresultnotes\resultnotesfalse
+\newcommand{\resultnote}[1]{\ifresultnotes{\color{blue!70!black}\textit{[#1]}}\fi}
+
+% primitive \input, so generated table rows can be followed by \bottomrule inside a tabular
+\makeatletter\newcommand{\tabinput}[1]{\@@input results/tables/#1.tex }\makeatother
+
+\title{Lightweight Real-Time Semantic Segmentation:\\
+Reproducing LMIINet's Efficiency and Accuracy on CamVid}
+
+\author{%
+  Prakhar Srivastava \\
+  B23CM1056 \\
+  Indian Institute of Technology Jodhpur \\
+  \texttt{b23cm1056@iitj.ac.in} \\
+  \And
+  Neer Bipinkumar Modi \\
+  B23CS1043 \\
+  Indian Institute of Technology Jodhpur \\
+  \texttt{b23cs1043@iitj.ac.in} \\
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Real-time semantic segmentation has to balance accuracy against parameters, compute and measured
+speed. LMIINet~\cite{qiu2024lmiinet} reports 69.94\% mIoU on CamVid with 0.72M parameters at
+160\,FPS, obtained by letting the local and context branches of each block, and a linear-attention
+Transformer and a channel-attention block, exchange learned and weighted copies of their outputs.
+The paper has no public code. We rebuild LMIINet from its equations (\LmiiParams{}M parameters),
+train it from scratch for \Epochs{} epochs, and compare it with a U-Net of the same depth and a
+parameter-matched U-Net under one recipe and one timing protocol on a laptop RTX 3060. Over
+\NumSeeds{} seeds LMIINet reaches \LmiiMiou\% test mIoU, against \UnetMiou\% for the U-Net with
+2.6 times its parameters and \UnetPmMiou\% for the parameter-matched U-Net, a lead that is not statistically significant, while the larger
+U-Net's lead over LMIINet is ($p = 0.04$). Ablations show that the
+Transformer, the channel reconstruction unit and the feature-enhancement decoder each add one to
+one and a half points, while the learned interaction coefficients, the paper's central idea, add
+nothing at this scale. With half or a quarter of the training images the lead over the
+parameter-matched U-Net disappears. Speed does not follow the MAC count: LMIINet needs a fifth of
+U-Net's compute but runs slower on this GPU (\LmiiFpsG{} against \UnetFpsG{}\,FPS replayed as CUDA
+graphs, and only \LmiiFps{}\,FPS in eager PyTorch), because its many small kernels are limited by
+launch overhead and memory traffic rather than arithmetic.
+Code: \url{https://github.com/CoPrime69/lmiinet-camvid}.
+\end{abstract}
+
+% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Semantic segmentation assigns a class to every pixel. In driving and robotics it has to run at
+frame rate on modest hardware, so a model is judged on accuracy together with parameters, compute
+and measured speed. Encoder-decoders such as U-Net~\cite{ronneberger2015unet} and
+SegNet~\cite{badrinarayanan2017segnet} are accurate but spend most of their compute on
+full-resolution convolutions. Real-time networks (ENet~\cite{paszke2016enet},
+ERFNet~\cite{romera2018erfnet}, BiSeNet~\cite{yu2018bisenet}) cut that cost with factorised and
+dilated convolutions, and recent hybrids (MobileViT~\cite{mehta2022mobilevit},
+TopFormer~\cite{zhang2022topformer}, LETNet~\cite{xu2023letnet}) add a Transformer for global context.
+
+LMIINet~\cite{qiu2024lmiinet} reports a strong point on this trade-off: 0.72M parameters and
+69.94\% mIoU at 160\,FPS on CamVid (RTX 2080Ti). Its central idea is \emph{multiple-information
+interaction}. Instead of running a local path and a context path side by side and summing them,
+each path receives a learned, weighted copy of the other's output, and the same device couples a
+linear-attention Transformer to a channel-attention block. The paper has no public code, leaves
+several design details open, and does not state its training schedule.
+
+\paragraph{Contributions.} This project tests whether LMIINet's efficiency and accuracy advantage
+holds when the model is rebuilt from the paper alone and trained at a much smaller scale
+(Section~\ref{sec:problem} states the questions precisely). Our contributions are:
+\begin{itemize}
+  \item An independent PyTorch implementation of LMIINet with \LmiiParams{}M parameters (paper:
+        0.72M). Every unspecified detail and our choice for it is listed in
+        Appendix~\ref{app:decisions}, and the attention, metric and complexity code is checked
+        against independent references (Appendix~\ref{app:tests}).
+  \item A controlled comparison with a U-Net of the same depth and a parameter-matched U-Net,
+        trained with one recipe and timed with one protocol on one GPU.
+  \item Ablations of the components that carry the interaction idea, and a reduced-data study
+        with 25\% and 50\% of the training images.
+  \item A measurement of where the time goes when such a network runs on a laptop GPU, which
+        turns out to matter as much for the efficiency claim as the parameter count does.
+\end{itemize}
+
+% =====================================================================
+\section{Literature Review}
+\label{sec:related}
+
+\paragraph{Real-time segmentation.} ENet~\cite{paszke2016enet} introduced early down-sampling and
+asymmetric bottlenecks; ERFNet~\cite{romera2018erfnet} used factorised residual $3{\times}1$ and
+$1{\times}3$ convolutions; BiSeNet~\cite{yu2018bisenet} split spatial detail and context into two
+paths. LETNet~\cite{xu2023letnet}, from the same group as LMIINet, combines a U-shaped CNN with a
+Transformer at the bottleneck and long connections with feature enhancement. LMIINet keeps this
+skeleton and replaces the blocks.
+
+\paragraph{Efficient attention.} Softmax attention costs $\mathcal{O}(N^2d)$ for $N$ tokens.
+Linear attention~\cite{katharopoulos2020transformers} replaces the softmax kernel with a feature map
+$\phi$, so that $\phi(Q)(\phi(K)^\top V)$ costs $\mathcal{O}(Nd^2)$. FLatten
+Transformer~\cite{han2023flatten} adds a \emph{focusing} function that sharpens the attention
+distribution and a depthwise convolution that restores feature diversity. LMIINet builds its
+global module on FLatten and couples it with the channel attention block (CAB) of
+HAT~\cite{chen2023hat}.
+
+\paragraph{Redundancy-reducing convolutions.} SCConv~\cite{li2023scconv} proposes a Channel
+Reconstruction Unit (CRU) that splits the channels, transforms one part richly and reuses the
+other cheaply. LMIINet places a CRU inside its bottleneck.
+
+% =====================================================================
+\section{Problem Statement}
+\label{sec:problem}
+
+\paragraph{Task.} Given an RGB road-scene image $I \in [0,255]^{H\times W\times 3}$, predict a label
+map $\hat{Y} \in \{1,\dots,K\}^{H\times W}$ over the $K=11$ CamVid classes; pixels labelled
+\emph{void} are ignored. Accuracy is the mean intersection-over-union over classes, accumulated over
+the whole test set:
+\begin{equation}
+\mathrm{mIoU} = \frac{1}{K}\sum_{k=1}^{K}
+\frac{\lvert\{\hat{Y}=k\}\cap\{Y=k\}\rvert}{\lvert\{\hat{Y}=k\}\cup\{Y=k\}\rvert}.
+\end{equation}
+Efficiency is measured by the number of parameters, the multiply-accumulates (MACs) per frame and
+the frames per second (FPS) at batch size 1. A real-time segmentation network has to reach a high
+mIoU while keeping all three small.
+
+\paragraph{Claim under test.} LMIINet~\cite{qiu2024lmiinet} reports 69.94\% mIoU at 160\,FPS with
+0.72M parameters on CamVid and attributes this to multiple-information interaction. The paper
+releases no code and leaves its training schedule and several architectural details unspecified.
+
+\paragraph{Research questions.} Rebuilding LMIINet from the paper alone and training it at a much
+smaller scale than the paper, we ask:
+\begin{enumerate}
+  \item[RQ1] How close does an independent reimplementation come to the reported parameter count,
+             accuracy and speed?
+  \item[RQ2] Is it more accurate or faster than a U-Net of the same depth, and than a U-Net with the
+             same number of parameters, when all three are trained and timed identically?
+  \item[RQ3] Which of its components produce its accuracy, and in particular, does the learned
+             interaction help?
+  \item[RQ4] Does its advantage hold when less training data is available?
+\end{enumerate}
+
+\paragraph{Scope.} Every model is trained from scratch on one laptop GPU (RTX 3060, 6\,GB) for 80
+epochs, a small fraction of the schedule used in related work, and evaluated on CamVid only.
+
+% =====================================================================
+\section{Proposed Method}
+\label{sec:method}
+
+To answer these questions we rebuild LMIINet from its equations (Figure~\ref{fig:arch},
+Sections~\ref{sec:lfib} to \ref{sec:decoder}) and pair it with two U-Net baselines trained under
+exactly the same conditions (Section~\ref{sec:baselines}).
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=3mm,
+  blk/.style={draw, rounded corners=2pt, minimum height=8mm, minimum width=12mm, align=center, font=\scriptsize, fill=#1},
+  blk/.default=white,
+  arr/.style={-{Stealth[length=1.6mm]}, thick},
+  lab/.style={font=\tiny, text=black!60}]
+  \node[blk=gray!10] (in) {Input\\$H{\times}W$};
+  \node[blk=gray!20, right=of in] (stem) {Stem\\3$\times$conv};
+  \node[blk=blue!12, right=of stem] (e1) {E1\\LFIB$\times$2};
+  \node[blk=gray!20, right=of e1] (d1) {Down};
+  \node[blk=blue!12, right=of d1] (e2) {E2\\LFIB$\times$2};
+  \node[blk=gray!20, right=of e2] (d2) {Down};
+  \node[blk=blue!12, right=of d2] (e3) {E3\\LFIB$\times$2};
+  \node[blk=orange!20, right=of e3] (tf) {Improved\\Flatten TF};
+  \node[blk=blue!12, right=of tf] (de3) {D3\\LFIB$\times$2};
+  \node[blk=red!6, right=of de3] (aux) {Aux head\\(train only)};
+  \node[blk=green!15, below=10mm of e2] (fe2) {FE};
+  \node[blk=blue!12, left=of fe2] (de2) {D2\\LFIB$\times$2};
+  \node[blk=green!15, below=10mm of e1] (fe1) {FE};
+  \node[blk=blue!12, left=of fe1] (de1) {D1\\LFIB$\times$2};
+  \node[blk=red!12, below=6mm of de1] (head) {SegHead\\(1/2,1/4,1/8)};
+  \node[blk=gray!10, left=of head] (out) {Logits\\$H{\times}W$};
+  \draw[arr] (in) -- (stem); \draw[arr] (stem) -- (e1); \draw[arr] (e1) -- (d1); \draw[arr] (d1) -- (e2);
+  \draw[arr] (e2) -- (d2); \draw[arr] (d2) -- (e3); \draw[arr] (e3) -- (tf); \draw[arr] (tf) -- (de3);
+  \draw[arr] (de3) -- (aux);
+  \draw[arr] (de3.south) |- (fe2.east);
+  \draw[arr, dashed] (e2) -- node[lab, right]{LC} (fe2);
+  \draw[arr] (fe2) -- (de2);
+  \draw[arr] (de2) -- (fe1);
+  \draw[arr, dashed] (e1) -- node[lab, right]{LC} (fe1);
+  \draw[arr] (fe1) -- (de1);
+  \draw[arr] (de1) -- (head); \draw[arr] (head) -- (out);
+  \node[lab, above=0mm of e1] {32ch, 1/2}; \node[lab, above=0mm of e2] {64ch, 1/4};
+  \node[lab, above=0mm of e3] {128ch, 1/8};
+\end{tikzpicture}}
+\caption{LMIINet as reimplemented. Six LFIB stages of two blocks each (the paper's
+\{2,2,2,2,2,2\} setting), one improved Flatten Transformer block at 1/8 resolution, two long
+connections (LC) feeding encoder detail into feature-enhancement (FE) modules, a SegHead fusing
+the 1/2, 1/4 and 1/8 decoder outputs, and an auxiliary head at 1/8 used only in training.}
+\label{fig:arch}
+\end{figure}
+
+\subsection{Lightweight Feature Interaction Bottleneck (LFIB)}
+\label{sec:lfib}
+Given $x\in\mathbb{R}^{C\times H\times W}$, LFIB applies a $1{\times}1$ convolution and splits the
+result into two halves. A left branch of asymmetric $3{\times}1$ and $1{\times}3$ convolutions models
+local structure; a right branch of a dilated depthwise $3{\times}3$ and a pointwise convolution
+models context. The branches interact through combination coefficients (CC) $\alpha$, learnable
+scalars initialised to $0.5$:
+\begin{align}
+F_1 &= H_{1\times1}(x), \qquad [F_{21}, F_{22}] = \mathrm{Split}(F_1),\\
+F_{21}' &= H_{1\times3}\big(H_{3\times1}(F_{21} + \alpha_l F_{22})\big),\qquad
+F_{22}' = H_{1\times1}\big(H^{d}_{3\times3,\mathrm{DW}}(F_{22} + \alpha_r F_{21}')\big),\\
+F_2 &= [F_{21}', F_{22}'] + \mathrm{CRU}(F_1), \qquad
+y = \mathrm{Shuffle}\big(H_{3\times3,\mathrm{DW}}(x + F_2)\big).
+\end{align}
+The CRU~\cite{li2023scconv} adds a cheap channel-reconstruction path and channel shuffle mixes the
+two halves before the next block. Dilation rates grow with depth: (1,2), (2,4), (4,8) in the
+encoder and (4,2), (2,1), (1,1) in the decoder.
+
+\subsection{Improved Flatten Transformer}
+At 1/8 resolution ($45{\times}60$ tokens for a $360{\times}480$ input) one Transformer block adds
+global context through focused linear attention (FLAM)~\cite{han2023flatten}:
+\begin{equation}
+\phi_p(x) = \frac{\lVert x\rVert}{\lVert x^{p}\rVert}\,x^{p},\; x\leftarrow\mathrm{ReLU}(x),\qquad
+\mathrm{FLAM}(X) = \mathrm{diag}(Z)\,\phi_p(Q)\big(\phi_p(K)^\top V\big) + \mathrm{DWC}(V),
+\end{equation}
+with focusing power $p=3$, 4 heads, a $5{\times}5$ depthwise convolution and
+$Z_i = 1/(\phi_p(Q_i)^\top \sum_j \phi_p(K_j))$. Computing $\phi_p(K)^\top V$ first never forms the
+$N{\times}N$ matrix. LMIINet couples the attention output to a CAB (two $3{\times}3$ convolutions
+with GELU and channel attention~\cite{chen2023hat}) through a second combination coefficient:
+\begin{align}
+F_{11} &= \mathrm{FLAM}(\mathrm{LN}(x_t)),\qquad F_{12} = \mathrm{CAB}(x_t + \alpha_t F_{11}),\\
+F_1 &= F_{11} + F_{12} + x_t, \qquad y_t = F_1 + \mathrm{MLP}(\mathrm{LN}(F_1)).
+\end{align}
+The power and normalisation steps run in fp32 even under mixed precision, since $x^{p}$ overflows
+easily in 16-bit formats.
+
+\subsection{Decoder, segmentation head and loss}
+\label{sec:decoder}
+Each decoder stage reduces and up-samples the deeper feature, and a feature-enhancement (FE)
+module fuses it with the encoder feature carried by a long connection. FE gates the detail
+feature with a spatial attention map computed from the semantic feature (CBAM
+style~\cite{woo2018cbam}), adds the two, and refines the sum with a depthwise convolution and
+ECA~\cite{wang2020eca}. The SegHead up-samples the 1/4 and 1/8 decoder outputs to 1/2,
+concatenates them with the 1/2 output, and applies two $1{\times}1$ convolutions. Training
+minimises $\mathcal{L} = \mathcal{L}_{\text{main}} + 0.3\,\mathcal{L}_{\text{aux}}$, both
+class-weighted cross-entropy, with the auxiliary logits predicted directly from the 1/8 decoder
+feature.
+
+\subsection{Baselines}
+\label{sec:baselines}
+LMIINet bottoms out at 1/8 resolution, so our U-Net~\cite{ronneberger2015unet} uses three
+down-sampling steps (four levels) of double $3{\times}3$ conv, BN and ReLU blocks with
+transposed-convolution up-sampling. \textbf{U-Net} (base width 32, \UnetParams{}M parameters) is the
+standard model of similar depth named in our proposal. \textbf{U-Net-PM} (base width 20,
+\UnetPmParams{}M) has the same parameter budget as LMIINet, which separates the effect of the
+architecture from the effect of size.
+
+% =====================================================================
+\section{Experiments and Results}
+\label{sec:results}
+
+\subsection{Experimental setup}
+\label{sec:setup}
+
+\paragraph{Data.} The 11-class CamVid split of SegNet~\cite{badrinarayanan2017segnet}: 367 training,
+101 validation and 233 test images at $360{\times}480$, with the \emph{void} label ignored.
+
+\paragraph{Training.} All models share the paper's CamVid recipe~\cite{qiu2024lmiinet}:
+Adam~\cite{kingma2015adam} with $\beta_1=0.9$, initial learning rate $10^{-3}$, weight decay
+$2{\times}10^{-4}$, batch size 8 and poly decay $(1-\text{iter}/\text{max\_iter})^{0.9}$
+\cite{chen2018deeplab}. The paper does not report its schedule or augmentation. We train for
+\Epochs{} epochs (3,600 iterations), from random initialisation, with random scaling in
+$[0.75, 1.75]$, $360{\times}480$ crops, horizontal flips and mild colour jitter. Cross-entropy is
+weighted with ENet weights $w_k = 1/\ln(1.02 + p_k)$~\cite{paszke2016enet}. We keep the checkpoint
+with the best validation mIoU (evaluated every 5 epochs) and evaluate it once on the test set.
+Training uses bf16 autocast.
+
+\paragraph{Reduced-data study.} LMIINet and U-Net-PM are retrained on a fixed random 25\% and
+50\% subset of the training images (the same subset for both models). The number of optimisation
+steps is held at about 3,600 by scaling the epochs (3,520 to 3,680, as the subset sizes are not
+multiples of the batch), so the comparison isolates the amount of data
+rather than the amount of training.
+
+\paragraph{Efficiency.} Parameters are counted exactly. MACs are counted for one
+$360{\times}480$ image over convolutions, linear layers and the attention products; most
+segmentation papers report this quantity as ``FLOPs''. FPS is measured at batch size 1 after a
+warm-up, with the GPU synchronised before the clock is read, in two ways: eager PyTorch, and with
+the forward pass captured once as a CUDA graph and replayed. All timings come from one laptop
+RTX 3060 (6\,GB) under Windows, so they compare with each other but not with the paper's 2080Ti.
+
+% =====================================================================
+\begin{table}[t]
+\caption{CamVid test set at $360{\times}480$. FPS at batch 1 on \BenchDevice{}, in eager PyTorch
+and as a CUDA-graph replay (fp32 and fp16). The last row is the paper's reported result on an RTX
+2080Ti after a longer, unstated schedule (n/r: not reported).}
+\label{tab:main}
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+ & & & \multicolumn{3}{c}{FPS} & & \\
+\cmidrule(lr){4-6}
+Model & Params (M) & GMACs & eager & graph & graph fp16 & mIoU (\%) & Pixel acc. (\%) \\
+\midrule
+\tabinput{main_table}
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{minipage}{0.49\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/01_miou_vs_fps.pdf}
+\end{minipage}\hfill
+\begin{minipage}{0.49\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/02_data_scale.pdf}
+\end{minipage}
+\caption{\textbf{Left:} test mIoU against speed (CUDA-graph replay, fp32; marker area grows with
+the parameter count; star: the paper's reported point on a different GPU). \textbf{Right:} test mIoU
+against the share of training images used, at an equal number of optimisation steps.}
+\label{fig:tradeoff}
+\end{figure}
+
+\subsection{Accuracy, size and speed}
+Table~\ref{tab:main} gives the main comparison, as the mean and standard deviation over
+\NumSeeds{} seeds. LMIINet reaches \LmiiMiou{} $\pm$ \LmiiMiouStd\% test mIoU with \LmiiParams{}M
+parameters and \LmiiGmacs{} GMACs per frame. The parameter-matched U-Net-PM reaches \UnetPmMiou{}
+$\pm$ \UnetPmMiouStd\% with almost the same parameter count and twice the compute, and the standard
+U-Net reaches \UnetMiou{} $\pm$ \UnetMiouStd\% with 2.6 times the parameters and five times the
+compute. Ranked by the mean, the standard U-Net is first, LMIINet second and U-Net-PM third. The U-Net
+is ahead of LMIINet in every seed, by 0.5 to 1.9 points. LMIINet's lead over the parameter-matched
+U-Net is smaller and less certain: it is ahead by 1.3 and 1.4 points in two seeds and behind by 0.3
+in the third, a mean of 0.8 points against seed-to-seed standard deviations of 0.4 to 0.6. Welch's
+$t$-test on the three seeds separates U-Net from LMIINet ($p = 0.04$) but not LMIINet from U-Net-PM
+($p = 0.12$). At the paper's 0.72M budget LMIINet is therefore on par with a plain U-Net of the
+same size, which needs about twice its MACs but, as the next section shows, runs twice as fast.
+
+LMIINet is \PaperGap{} points below the paper's 69.94\%. We attribute most of the gap to the
+training schedule. Without a long run this cannot be proven, but three observations from our logs
+point the same way. First, no model had converged: all nine runs of the main comparison reached
+their best validation score within the last fifteen of their 80 epochs, and in every one of them
+the mean training loss over epochs 71 to 80 is still below that over epochs 61 to 70. Second, the
+gap in training is large: related work from the same group trains CamVid for about 1000
+epochs~\cite{xu2023letnet}, roughly 45,000 updates at batch 8 against our 3,600, a factor of
+about twelve. Third, on this split the test set is markedly harder than the validation set: best
+validation mIoU is 7 to 12 points above test mIoU for every model and largest for LMIINet (about
+67\% against 56\%), so a checkpoint chosen on validation does not carry its score over to test.
+Several architectural details are also our own choices (Appendix~\ref{app:decisions}) and could
+account for part of the remainder. The decisive test is a single LMIINet run of 300 to 1000
+epochs with the code as released.
+
+\subsection{Where the time goes on a laptop GPU}
+LMIINet needs \LmiiGmacs{} GMACs per $360{\times}480$ frame, against \UnetGmacs{} for U-Net and
+\UnetPmGmacs{} for U-Net-PM, so on paper it should be the fastest of the three by a wide margin.
+On our laptop GPU it is the slowest (Table~\ref{tab:main}). Two separate effects are at work.
+
+The first is launch overhead. In eager PyTorch every operation is a separate kernel launched from
+Python, and LMIINet's forward pass consists of several hundred small ones (each of the twelve LFIBs launches about
+forty, counting normalisation, activation, the CRU and the channel shuffle). Its eager speed is \LmiiFps{}\,FPS, while replaying
+the same forward pass as a captured CUDA graph, which issues the identical kernels without the
+per-launch cost, gives \LmiiFpsG{}\,FPS. For U-Net, which has few and large kernels, the two
+figures are almost equal (\UnetFps{} and \UnetFpsG{}\,FPS). In eager mode LMIINet is therefore
+bound by the CPU, not the GPU.
+
+The second is memory traffic. Even as a CUDA graph LMIINet stays behind both U-Nets
+(\LmiiFpsG{} against \UnetFpsG{} and \UnetPmFpsG{}\,FPS in fp32, \LmiiFpsGH{} against \UnetFpsGH{}
+and \UnetPmFpsGH{}\,FPS in fp16). Depthwise, asymmetric and $1{\times}1$ convolutions on 32 to 128
+channels do little arithmetic per byte they read, and each LFIB also splits, concatenates, shuffles
+and re-normalises its feature maps. Those operations cost memory bandwidth and appear in no MAC
+count. The same property shows in training: LMIINet's peak training memory at batch 8 is
+\LmiiPeakGB{}\,GB in bf16, more than either U-Net despite the smallest parameter count, and in fp32
+it exceeded the 6\,GB card, at which point the Windows driver silently spilled into system memory
+and every kernel ran 50 to 100 times slower.
+
+None of this contradicts the paper's 160\,FPS, which was measured on a different GPU with an
+unstated runtime. It does show that parameters and MACs are weak predictors of speed for this
+kind of network, and that a speed claim needs the hardware, precision and execution mode next to
+it.
+
+\subsection{Ablation of the interaction mechanisms}
+
+\begin{table}[t]
+\caption{Ablations of LMIINet on CamVid test, same recipe and seed. $\Delta$ is the change in mIoU
+against the full model.}
+\label{tab:ablation}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+Variant & Params (M) & GMACs & mIoU (\%) & $\Delta$ \\
+\midrule
+\tabinput{ablation_table}
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:ablation} removes one component at a time (seed 42 for every row, including the
+full model, which scores \LmiiMiouSeedFortyTwo\% in that run). Three components earn their place.
+Without the Flatten Transformer the network loses 1.0 point, without the CRU 1.0 point, and without
+the feature-enhancement fusion 1.5 points. The first two are also the expensive ones: they hold 29\%
+and 22\% of the parameters, and removing the CRU alone raises the CUDA-graph frame rate from 76 to
+104\,FPS, the largest speed gain of any ablation.
+
+The combination coefficients behave differently. Setting them to zero, which removes every
+cross-branch and attention-to-CAB exchange while keeping the architecture and the parameter count
+unchanged, gives 56.24\%, slightly \emph{above} the full model. In the full model the learned
+coefficients end between \CcMin{} and \CcMax{} (mean \CcMean) after starting at 0.5, so training
+barely uses the freedom it is given. At our scale, then, the multiple-information interaction that
+gives LMIINet its name contributes nothing measurable; what helps is the set of components around
+it.
+
+\paragraph{How reliable are single-seed ablations?} Each ablation was trained once, so we judge it
+against the spread of the full model over its three seeds ($55.45 \pm 0.58$). All four ablations
+fall outside the range of those three runs: the three removals below the lowest of them and the
+no-CC run above the highest. None, however, differs from the full model by more than about two
+standard deviations, and with three reference runs a two-sided $t$-test on a single new run gives
+$p$ between 0.19 and 0.36. The ablations therefore show a consistent direction (every removal
+hurts, removing the coefficients does not) rather than a measured effect size, and a gain of 0.8
+points without the coefficients should be read as ``no detectable benefit'', not as harm.
+
+\paragraph{Why the coefficients can add little.} There is also a structural reason. In an LFIB the
+halves $F_{21}$ and $F_{22}$ are two slices of one tensor $F_1 = H_{1\times1}(x)$. Adding
+$\alpha_l F_{22}$ to the left branch feeds its $3{\times}1$ convolution a fixed linear mix of channels
+that the learnable $1{\times}1$ convolution could nearly have placed in $F_{21}$ itself, so this
+injection is close to a reparametrisation rather than new capacity. The right-hand injection does
+carry something new, the processed left output, but the same exchange happens one step later in
+any case: the halves are concatenated, added to the CRU output that sees all channels, mixed by the
+channel shuffle, and passed to the next block's $1{\times}1$ convolution, which combines every
+channel of both branches. The coefficients move this exchange a layer earlier rather than creating
+it. The learned values agree: over the 75 coefficients of the three seeds the mean move away from
+the initial 0.5 is 0.04 and the largest is 0.13.
+
+\subsection{Smaller training sets}
+
+\begin{table}[t]
+\caption{CamVid test mIoU (\%) when training on a fixed random subset of the 367 training images,
+with the number of optimisation steps held at about 3,600.}
+\label{tab:scale}
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+Model & 25\% (92 images) & 50\% (184 images) & 100\% (367 images) \\
+\midrule
+\tabinput{scale_table}
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:scale} and Figure~\ref{fig:tradeoff} (right) repeat the size-matched comparison with
+less data, at the same number of optimisation steps. LMIINet loses 2.7 points with half the
+images and 3.1 with a quarter; U-Net-PM is unchanged with half (54.65 against 54.33, within noise)
+and loses 1.6 with a quarter. LMIINet's 1.3-point lead at full data becomes a 1.8-point deficit at
+half and a tie at a quarter. One might expect the stronger inductive biases of a factorised,
+attention-equipped network to help when data is scarce; on CamVid they do not. Judged against the three-seed spread of each model at full data, LMIINet's
+drop is beyond seed noise with a quarter of the images ($p = 0.05$) and borderline with half
+($p = 0.06$), whereas U-Net-PM is unchanged with half ($p = 0.97$) and drops only with a quarter
+($p = 0.05$). A hint about why comes from validation: LMIINet's best validation mIoU stays near 68\% at every fraction while its
+test mIoU falls, so with fewer images it fits the training distribution as well as before but
+generalises worse to the harder test frames.
+
+\subsection{Per-class accuracy and qualitative results}
+
+\begin{table}[t]
+\caption{Per-class test IoU (\%).}
+\label{tab:perclass}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{lccccccccccc}
+\toprule
+Model & Sky & Bldg & Pole & Road & Sidewalk & Tree & Sign & Fence & Car & Ped. & Bicyclist \\
+\midrule
+\tabinput{perclass_table}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/04_qualitative.pdf}
+\caption{CamVid test images. Columns: input, ground truth, LMIINet, U-Net, U-Net-PM.}
+\label{fig:qual}
+\end{figure}
+
+Table~\ref{tab:perclass} shows where the errors are (means over three seeds). All three models
+segment sky and road well, above 89\%, with sidewalk, building and tree between 67\% and 76\%. The
+thin and small classes are hard for all of them: pole, sign symbol and fence lie between 17\% and
+29\%, pedestrian and bicyclist between 30\% and 43\%. LMIINet's clearest gain is on bicyclist
+(39.9\%, against 32.8\% for U-Net and 30.1\% for U-Net-PM), a thin class its long connections and
+half-resolution head are meant to keep, and it is slightly ahead of U-Net-PM on pole and sign
+symbol. The larger U-Net leads on building, tree, pedestrian and car, where its full-resolution
+features and extra capacity help. LMIINet's confusion matrix (Appendix~\ref{app:curves}) shows
+that most thin-class errors are pixels given to building: 34\% of sign-symbol pixels, 24\% of fence
+pixels and 17\% of pole pixels. Bicyclists are confused with pedestrians (18\%) and sidewalk with
+road (11\%). Pedestrian recall is 78\%, so that class's low IoU comes mostly from false positives
+rather than missed people.
+
+% =====================================================================
+\section{Conclusions}
+\label{sec:conclusion}
+We rebuilt LMIINet from its paper with the published parameter budget and compared it with two
+U-Net baselines under one recipe, one timing protocol and one GPU. Our answers to the research
+questions of Section~\ref{sec:problem} are:
+\begin{enumerate}
+  \item[RQ1] The parameter count is reproduced (\LmiiParams{}M against 0.72M), but accuracy is not:
+             \LmiiMiou\% test mIoU over three seeds against the reported 69.94\%, after about a
+             twelfth of the training updates. On our laptop GPU the model runs at \LmiiFpsG{}\,FPS
+             as a CUDA graph and \LmiiFps{}\,FPS in eager PyTorch.
+  \item[RQ2] LMIINet is significantly less accurate than the U-Net with 2.6 times its parameters
+             (1.4 points, $p = 0.04$) and on par with a U-Net of the same size (0.8 points ahead,
+             not significant). It is slower than both, because its many small kernels are limited
+             by launch overhead and memory traffic rather than by arithmetic.
+  \item[RQ3] The Transformer, the channel reconstruction unit and the feature-enhancement decoder
+             each contribute about a point. The learned interaction coefficients after which the
+             network is named contribute nothing measurable, and the block's structure explains
+             why: the exchange they add already happens one layer later.
+  \item[RQ4] No. With half or a quarter of the training images LMIINet loses more accuracy than
+             the same-size U-Net, and its small lead disappears.
+\end{enumerate}
+The broader lesson is that a small parameter count and MAC count do not by themselves make a fast
+or a data-efficient network. Training for the paper's full schedule, more seeds for the ablations,
+and timing with fused kernels on more than one device are the obvious next steps. Code, logs and
+the data behind every figure are released.
+
+\subsection{Limitations}
+\label{sec:limitations}
+The paper leaves the channel widths, dilation rates, form of the combination coefficients, FE
+module, CAB and MLP widths and the whole training schedule unspecified. Our choices reproduce the
+parameter count, but they are ours, so a gap to the paper's accuracy does not by itself show that
+its numbers cannot be reproduced. We train for \Epochs{} epochs; the paper's schedule is unknown but
+related work from the same group trains CamVid for about 1000 epochs~\cite{xu2023letnet}. The main
+comparison uses \NumSeeds{} seeds per model, enough to show that U-Net is ahead of LMIINet
+($p = 0.04$) but not to separate LMIINet from U-Net-PM. The ablations and the reduced-data study
+use one seed each and are judged against the three-seed spread of the full models; the ablation
+effects are consistent in direction but none is individually significant. All timings come
+from one laptop GPU under Windows, and our implementation uses no fused kernels for the channel
+shuffle, the CRU or the attention, which a deployment would. Finally, we evaluate on CamVid only;
+Cityscapes, at four times the resolution, would test the efficiency claim harder.
+
+\begin{ack}
+This work was carried out as the course project for CSL7360 Computer Vision at IIT Jodhpur. We
+received no external funding and declare no competing interests.
+\end{ack}
+
+{\small
+\bibliographystyle{plainnat}
+\bibliography{references}
+}
+
+% =====================================================================
+\appendix
+
+\section{Unspecified details and our choices}
+\label{app:decisions}
+
+\begin{table}[h]
+\caption{Details the LMIINet paper~\cite{qiu2024lmiinet} does not give, and the choice made here.}
+\centering
+\scriptsize
+\begin{tabular}{p{0.32\textwidth}p{0.60\textwidth}}
+\toprule
+Detail & Our choice \\
+\midrule
+Stage widths and resolutions & 32 (1/2), 64 (1/4), 128 (1/8); LETNet-style stem (three $3{\times}3$ convs, the first with stride 2) and concat(stride-2 conv, max-pool) down-sampling \\
+LFIB dilation rates & encoder (1,2), (2,4), (4,8); decoder (4,2), (2,1), (1,1) \\
+Combination coefficient & one learnable scalar per injection, initialised to 0.5; the right branch receives the \emph{updated} left output (Eq.~4 of the paper is ambiguous) \\
+Channel shuffle groups & 2 \\
+CRU hyper-parameters & SCConv defaults: split ratio 1/2, squeeze ratio 2, group convolution with 2 groups \\
+FLAM & 4 heads, focusing power $p=3$, $5{\times}5$ DWC, learnable softplus scale, no positional encoding \\
+Transformer depth, MLP ratio & 1 block, ratio 2 \\
+CAB & compression ratio 4, channel-attention squeeze 16 \\
+FE module & CBAM-style spatial gate from the semantic feature on the detail feature, then a depthwise refinement and ECA \\
+Long connection & depthwise $3{\times}3$ and pointwise convolution on the encoder feature \\
+SegHead & concatenation (as in the text) rather than the sum written in Eq.~13; $224\!\to\!64\!\to\!11$ channels with BN, PReLU and dropout 0.1 \\
+Schedule and augmentation & \Epochs{} epochs; scale $[0.75,1.75]$, crop $360{\times}480$, flip, colour jitter \\
+Class weighting & ENet weights \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Correctness checks}
+\label{app:tests}
+\texttt{src/tests.py} runs before any training and the pipeline stops if one fails. Each check
+compares the implementation with an independent reference; the outputs of the last run are in
+\texttt{results/00\_unit\_tests.csv}.
+\begin{itemize}
+  \item The linear-attention product equals an explicit, row-normalised $N{\times}N$ attention
+        (error $2.9{\times}10^{-7}$), and the whole FLAM module equals a slow reference written from
+        the equations with the same weights (error $5.6{\times}10^{-16}$ in float64).
+  \item The focusing function keeps the norm of its input and makes it more peaked.
+  \item mIoU and pixel accuracy from the confusion matrix equal brute-force per-class counting with
+        void pixels ignored, to $10^{-9}$.
+  \item The MAC counter equals a hand count for a small network; the U-Net parameter counts equal
+        a closed-form formula; LMIINet has \LmiiParams{}M parameters.
+  \item Every model gives correctly shaped outputs at odd input sizes, and every parameter
+        receives a gradient (which caught an auxiliary head that was not being trained in an early
+        version of the test).
+  \item The on-GPU augmentation reproduces the image exactly at scale 1, mirrors it exactly under
+        a flip, pads with void outside the image, and never creates a label value.
+  \item A training step replayed from a CUDA graph matches an eager step to within the
+        run-to-run difference of two eager runs.
+\end{itemize}
+
+\section{Higher input resolution}
+\label{app:hires}
+The paper also reports 70.12\% mIoU at 120\,FPS for $720{\times}960$ inputs. Our
+$360{\times}480$-trained LMIINet evaluated on up-sampled $720{\times}960$ inputs (labels kept at their
+native resolution) reaches \LmiiMiouHiRes\% mIoU.
+
+\begin{table}[h]
+\caption{Compute and speed at $720{\times}960$ (batch 1, fp32, \BenchDevice{}).}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+Model & GMACs & FPS (CUDA graph) \\
+\midrule
+\tabinput{hires_table}
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Training curves and confusion matrix}
+\label{app:curves}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/03_training_curves.pdf}
+\caption{Training loss and validation mIoU (every 5 epochs) of the three main models.}
+\end{figure}
+\begin{figure}[h]
+\centering
+\begin{minipage}{0.52\textwidth}\centering
+\includegraphics[width=\linewidth]{figures/06_confusion_matrix.pdf}
+\end{minipage}\hfill
+\begin{minipage}{0.46\textwidth}\centering
+\includegraphics[width=\linewidth]{figures/07_ablation.pdf}
+\end{minipage}
+\caption{\textbf{Left:} row-normalised confusion matrix of LMIINet on the test set.
+\textbf{Right:} change in test mIoU when one component is removed.}
+\end{figure}
+
+\section{Reproducing every number}
+\label{app:repro}
+\begin{verbatim}
+python run.py                # everything, in order
+python run.py --phase main   # one phase; finished runs are skipped
+python run.py --phase main --seeds 42 7 123
+\end{verbatim}
+Every run is seeded; the main comparison uses seeds 42, 7 and 123 and all other runs seed 42. Code: \url{https://github.com/CoPrime69/lmiinet-camvid}.
+
+% =====================================================================
+\newpage
+\input{checklist}
+
+\end{document}

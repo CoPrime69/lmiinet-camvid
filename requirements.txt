@@ -1,0 +1,8 @@
+# Course project - Lightweight Real-Time Semantic Segmentation (LMIINet on CamVid)
+# Pinned to what the shared assignments/.venv (Python 3.11.9) has installed.
+# torch and torchvision are the CUDA 12.8 builds; any CUDA build of the same versions works.
+torch==2.11.0
+torchvision==0.26.0
+numpy==2.4.6
+pillow==12.3.0
+matplotlib==3.11.2
